@@ -1,0 +1,104 @@
+<%- include('partials/header') %>
+
+<main class="container" style="padding: 4rem 0;">
+    <div style="margin-bottom: 3rem;">
+        <h1>Search Results</h1>
+        <p style="color: var(--text-muted);"><%= providers.length %> professionals found for "<%= category || 'All Services' %>" in <%= location || 'your area' %></p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+        <!-- Filters -->
+        <aside>
+            <div style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); position: sticky; top: 100px;">
+                <h3 style="margin-bottom: 1.5rem;">Filters</h3>
+                
+                <form action="/search" method="GET">
+                    <% if (location) { %>
+                        <input type="hidden" name="location" value="<%= location %>">
+                    <% } %>
+
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.75rem;">Category</label>
+                        <select name="category" class="form-control" style="padding: 0.5rem;">
+                            <option value="">All Categories</option>
+                            <option value="Electrician" <%= category === 'Electrician' ? 'selected' : '' %>>Electrician</option>
+                            <option value="Plumber" <%= category === 'Plumber' ? 'selected' : '' %>>Plumber</option>
+                            <option value="Cleaner" <%= category === 'Cleaner' ? 'selected' : '' %>>Cleaner</option>
+                            <option value="Tutor" <%= category === 'Tutor' ? 'selected' : '' %>>Tutor</option>
+                            <option value="Mechanic" <%= category === 'Mechanic' ? 'selected' : '' %>>Mechanic</option>
+                            <option value="Gardener" <%= category === 'Gardener' ? 'selected' : '' %>>Gardener</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.75rem;">Price Range</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label><input type="checkbox" name="priceRange" value="₹500 - ₹2000"> Standard (₹500 - ₹2k)</label>
+                            <label><input type="checkbox" name="priceRange" value="₹2000+"> Premium (₹2k+)</label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.75rem;">Minimum Rating: <span id="ratingVal">1</span></label>
+                        <input type="range" name="minRating" min="1" max="5" step="0.5" style="width: 100%;" oninput="document.getElementById('ratingVal').innerText = this.value">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                            <span>1 Star</span>
+                            <span>5 Stars</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Apply Filters</button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Results -->
+        <div>
+            <div class="grid" style="margin-top: 0;">
+                <% if (providers && providers.length > 0) { %>
+                    <% providers.forEach(provider => { %>
+                        <% if (provider.userId) { %>
+                            <div class="card" onclick="window.location.href='/profile/<%= provider._id %>'">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    <img src="<%= provider.userId.profileImage %>" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= provider.userId.fullName %>&background=6366f1&color=fff'">
+                                    <div style="flex: 1;">
+                                        <h3 style="margin-bottom: 0.25rem;"><%= provider.userId.fullName %></h3>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <p style="color: var(--primary); font-weight: 600; font-size: 0.9rem; margin: 0;"><%= provider.services.map(s => s.category).join(', ') %></p>
+                                        <span class="badge" style="background: #ecfdf5; color: #047857; font-size: 0.8rem;"><%= provider.services[0].priceRange || 'Ask for Price' %></span>
+                                    </div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                                            <i class="fas fa-star" style="color: #f59e0b;"></i>
+                                            <span style="font-weight: 700;"><%= Number(provider.averageRating).toFixed(1) %></span>
+                                            <span style="color: var(--text-muted);">(<%= provider.totalReviews %> reviews)</span>
+                                        </div>
+                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;"><i class="fas fa-location-dot"></i> <%= provider.userId.address ? (provider.userId.address.city || 'Available Locally') : 'Available Locally' %></p>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                    <%= provider.bio %>
+                                </p>
+                                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Experience</span>
+                                        <span style="font-weight: 600;"><%= provider.experience %> Years</span>
+                                    </div>
+                                    <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">View Profile</button>
+                                </div>
+                            </div>
+                        <% } %>
+                    <% }) %>
+                <% } else { %>
+                    <div style="grid-column: 1/-1; text-align: center; padding: 5rem; background: var(--surface); border-radius: var(--radius);">
+                        <i class="fas fa-search" style="font-size: 4rem; color: var(--border); margin-bottom: 1.5rem;"></i>
+                        <h2>No workers found</h2>
+                        <p style="color: var(--text-muted);">Try adjusting your search terms or filters.</p>
+                        <a href="/" class="btn btn-outline" style="margin-top: 2rem;">Back to Home</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('partials/footer') %>

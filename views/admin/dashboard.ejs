@@ -1,0 +1,102 @@
+<%- include('../partials/header') %>
+
+<main class="container" style="padding: 4rem 0;">
+    <div style="margin-bottom: 3rem;">
+        <h1>System Administration</h1>
+        <p style="color: var(--text-muted);">Platform overview and management.</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-bottom: 4rem;">
+        <div style="background: var(--surface); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border);">
+            <i class="fas fa-users" style="color: var(--primary); font-size: 1.5rem; margin-bottom: 1rem;"></i>
+            <span style="display: block; color: var(--text-muted); font-size: 0.9rem;">Total Registered</span>
+            <span style="font-size: 2rem; font-weight: 800;"><%= stats.totalUsers %></span>
+        </div>
+        <div style="background: var(--surface); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border);">
+            <i class="fas fa-handshake" style="color: #10b981; font-size: 1.5rem; margin-bottom: 1rem;"></i>
+            <span style="display: block; color: var(--text-muted); font-size: 0.9rem;">Service Workers</span>
+            <span style="font-size: 2rem; font-weight: 800;"><%= stats.totalProviders %></span>
+        </div>
+        <div style="background: var(--surface); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border);">
+            <i class="fas fa-calendar-check" style="color: #6366f1; font-size: 1.5rem; margin-bottom: 1rem;"></i>
+            <span style="display: block; color: var(--text-muted); font-size: 0.9rem;">Total Bookings</span>
+            <span style="font-size: 2rem; font-weight: 800;"><%= stats.totalBookings %></span>
+        </div>
+        <div style="background: var(--surface); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border);">
+            <i class="fas fa-user-clock" style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 1rem;"></i>
+            <span style="display: block; color: var(--text-muted); font-size: 0.9rem;">Pending Verification</span>
+            <span style="font-size: 2rem; font-weight: 800;"><%= stats.pendingVerifications %></span>
+        </div>
+    </div>
+
+    <div style="display: grid; gap: 3rem;">
+        <!-- Provider Verification Section -->
+        <div>
+            <h3 style="margin-bottom: 1.5rem;">Pending Verifications</h3>
+            <div style="background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: var(--background);">
+                        <tr>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Worker Name</th>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Category</th>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Experience</th>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% providers.filter(p => !p.isVerified).forEach(provider => { %>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1.5rem 2rem; font-weight: 600;"><%= provider.userId.fullName %></td>
+                                <td style="padding: 1.5rem 2rem;"><%= provider.services[0].category %></td>
+                                <td style="padding: 1.5rem 2rem;"><%= provider.experience %> Years</td>
+                                <td style="padding: 1.5rem 2rem;">
+                                    <form action="/admin/provider/<%= provider._id %>/verify" method="POST">
+                                        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Approve Worker</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                        <% if (providers.filter(p => !p.isVerified).length === 0) { %>
+                            <tr><td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-muted);">No profiles awaiting verification.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Bookings Log -->
+        <div>
+            <h3 style="margin-bottom: 1.5rem;">Live Booking Monitor</h3>
+            <div style="background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: var(--background);">
+                        <tr>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">ID</th>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Customer</th>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Provider</th>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% bookings.slice(-5).reverse().forEach(booking => { %>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1.5rem 2rem; font-size: 0.8rem; color: var(--text-muted);">#<%= booking._id.toString().slice(-6) %></td>
+                                <td style="padding: 1.5rem 2rem;"><%= booking.customerId.fullName %></td>
+                                <td style="padding: 1.5rem 2rem;"><%= booking.providerId.userId.fullName %></td>
+                                <td style="padding: 1.5rem 2rem;">
+                                    <span class="badge" style="background: #f1f5f9; color: #475569;"><%= booking.status.toUpperCase() %></span>
+                                </td>
+                            </tr>
+                        <% }) %>
+                        <% if (bookings.length === 0) { %>
+                            <tr><td colspan="4" style="padding: 3rem; text-align: center; color: var(--text-muted);">No bookings in the system yet.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

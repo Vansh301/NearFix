@@ -1,0 +1,78 @@
+    <footer style="background: var(--surface); border-top: 1px solid var(--border); padding: 4rem 0 2rem; margin-top: 5rem;">
+        <div class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 3rem;">
+            <div>
+                <a href="/" class="logo" style="margin-bottom: 1.5rem;">
+                    <i class="fas fa-bolt"></i> Near<span>Fix</span>
+                </a>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">The simplest way to find and book trusted local service providers near you.</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 1.5rem;">Services</h4>
+                <ul style="color: var(--text-muted); font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <li><a href="/search?category=Electrician">Electricians</a></li>
+                    <li><a href="/search?category=Plumber">Plumbers</a></li>
+                    <li><a href="/search?category=Cleaner">Home Cleaners</a></li>
+                    <li><a href="/search?category=Tutor">Academic Tutors</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 1.5rem;">Company</h4>
+                <ul style="color: var(--text-muted); font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">How it Works</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="container" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+            &copy; 2026 NearFix Platform. All rights reserved.
+        </div>
+    <!-- Real-time Notification Toast (Premium Redesign) -->
+    <div id="msg-notification" style="display: none; position: fixed; top: 24px; right: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); padding: 1.25rem; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.12); z-index: 10000; min-width: 320px; transform: translateX(140%); transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); overflow: hidden;">
+        <!-- Animated Progress Bar -->
+        <div id="notif-progress" style="position: absolute; bottom: 0; left: 0; height: 4px; background: var(--primary); width: 100%; transform-origin: left; transition: transform linear;"></div>
+        
+        <div style="display: flex; gap: 1rem; align-items: flex-start;">
+            <!-- Icon/Avatar Container -->
+            <div id="notif-icon-container" style="width: 48px; height: 48px; min-width: 48px; background: linear-gradient(135deg, var(--primary), #4f46e5); color: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.2);">
+                <i class="fas fa-bell"></i>
+            </div>
+            
+            <div style="flex: 1; padding-top: 2px;">
+                <h4 id="notif-sender" style="margin: 0 0 4px 0; font-size: 1rem; font-weight: 800; color: #1e293b; letter-spacing: -0.01em;">New Update</h4>
+                <p id="notif-content" style="margin: 0; font-size: 0.85rem; color: #64748b; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">Loading update details...</p>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem;">
+                    <a id="notif-link" href="/chat" style="font-size: 0.75rem; color: var(--primary); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: gap 0.2s;">
+                        <span>View Details</span>
+                        <i class="fas fa-arrow-right" style="font-size: 0.7rem;"></i>
+                    </a>
+                    
+                    <!-- NEW: Manual Refresh Option for critical updates -->
+                    <button id="notif-refresh" onclick="window.location.reload()" style="display: none; background: #f1f5f9; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; color: var(--primary); font-weight: 700; cursor: pointer; align-items: center; gap: 4px;">
+                        <i class="fas fa-sync-alt"></i> Refresh Page
+                    </button>
+
+                    <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Just now</span>
+                </div>
+            </div>
+            
+            <button onclick="closeNotification()" style="background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; transition: all 0.2s;">
+                <i class="fas fa-times" style="font-size: 0.8rem;"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function closeNotification() {
+            const toast = document.getElementById('msg-notification');
+            toast.style.transform = 'translateX(140%)';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 600);
+        }
+    </script>
+
+</body>
+</html>

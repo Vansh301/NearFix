@@ -1,0 +1,125 @@
+<%- include('../partials/header') %>
+
+<main class="container" style="padding: 4rem 0;">
+    <div style="margin-bottom: 3rem;">
+        <h1>My Bookings</h1>
+        <p style="color: var(--text-muted);">Track your service requests and history.</p>
+    </div>
+
+    <div style="display: grid; gap: 1.5rem;">
+        <% if (bookings && bookings.length > 0) { %>
+            <% bookings.forEach(booking => { %>
+                <div style="background: var(--surface); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border); display: grid; grid-template-columns: 100px 1fr auto auto; gap: 2rem; align-items: center;">
+                    <img src="<%= booking.providerId.userId.profileImage %>" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= booking.providerId.userId.fullName %>&background=6366f1&color=fff'">
+                    
+                    <div>
+                        <h3 style="margin-bottom: 0.25rem;"><%= booking.providerId.userId.fullName %></h3>
+                        <span class="badge" style="background: #eff6ff; color: #1d4ed8; margin-bottom: 0.5rem;"><%= booking.service.category %></span>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);"><i class="fas fa-calendar-alt"></i> <%= new Date(booking.bookingDate).toLocaleDateString('en-GB') %> at <%= booking.bookingTime %></p>
+                    </div>
+
+                    <div style="text-align: right;">
+                        <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Status</span>
+                        <span class="badge status-<%= booking.status %>" style="margin-bottom: 0.5rem;">
+                            <%= booking.status.toUpperCase() %>
+                        </span>
+                        
+                        <% if (booking.totalAmount > 0) { %>
+                            <span style="display: block; font-weight: 700; color: var(--primary); font-size: 1.1rem;">₹<%= booking.totalAmount %></span>
+                            <span style="display: block; font-size: 0.7rem; color: #10b981; font-weight: 600;">Final Price</span>
+                        <% } else if (booking.proposedAmount > 0) { %>
+                            <span style="display: block; font-weight: 700; color: #f59e0b; font-size: 1.1rem;">₹<%= booking.proposedAmount %></span>
+                            <span style="display: block; font-size: 0.7rem; color: #f59e0b; font-weight: 600;">Service Offer</span>
+                        <% } else if (booking.service && booking.service.priceRange) { %>
+                            <span style="display: block; font-weight: 600; color: var(--text-muted); font-size: 0.95rem;"><%= booking.service.priceRange %></span>
+                            <span style="display: block; font-size: 0.7rem; color: var(--text-muted);">Est. Start</span>
+                        <% } %>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <a href="/chat/<%= booking.providerId.userId._id %>" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-color: var(--primary); color: var(--primary);">
+                            <i class="fas fa-message"></i> Chat Now
+                        </a>
+                        <% if (booking.status === 'completed' && !booking.reviewed) { %>
+                            <div style="background: #eef2ff; border: 1px dashed #6366f1; padding: 1rem; border-radius: 12px; text-align: center; margin-bottom: 0.5rem;">
+                                <p style="font-size: 0.8rem; font-weight: 600; color: #4338ca; margin-bottom: 0.5rem;">Service Completed!</p>
+                                <button class="btn btn-primary" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; background: #6366f1;" onclick="document.getElementById('reviewModal-<%= booking._id %>').style.display='flex'">
+                                    <i class="fas fa-star"></i> Leave Review
+                                </button>
+                            </div>
+                        <% } %>
+
+                        <% if (booking.paymentStatus !== 'paid' && (booking.proposedAmount > 0 || booking.totalAmount > 0)) { %>
+                            <div style="border: 1px solid var(--border); padding: 1rem; border-radius: 12px; background: #f8fafc; margin-top: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Payment Due:</span>
+                                    <span style="font-weight: 800; color: var(--text); font-size: 1.1rem;">₹<%= booking.proposedAmount || booking.totalAmount %></span>
+                                </div>
+                                <div style="display: flex; gap: 0.75rem; justify-content: space-between;">
+                                    <form action="/user/booking/<%= booking._id %>/pay" method="POST" style="flex: 1;">
+                                        <input type="hidden" name="method" value="cash">
+                                        <button type="submit" class="btn" style="width: 100%; padding: 0.6rem; font-size: 0.85rem; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; font-weight: 700; border-radius: 10px;">
+                                            <i class="fas fa-money-bill-wave"></i> Pay via Cash
+                                        </button>
+                                    </form>
+                                    <form action="/user/booking/<%= booking._id %>/pay" method="POST" style="flex: 1;">
+                                        <input type="hidden" name="method" value="online">
+                                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.6rem; font-size: 0.85rem; background: #10b981; border: none; font-weight: 700; border-radius: 10px;">
+                                            <i class="fas fa-credit-card"></i> Pay Online
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+<% } else if (booking.paymentStatus === 'paid') { %>
+                            <div style="background: #ecfdf5; color: #065f46; padding: 0.75rem; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; font-weight: 700; font-size: 0.85rem; margin-top: 0.5rem; border: 1.5px solid #a7f3d0;">
+                                <span><i class="fas fa-check-circle"></i> Paid Successfully</span>
+                                <span style="font-size: 0.7rem; opacity: 0.8; font-weight: 600;">Method: <%= booking.paymentMethod === 'cash' ? 'Cash' : 'Online' %></span>
+                            </div>
+                        <% } %>
+                        <% if (booking.status === 'pending') { %>
+                            <form action="/user/booking/<%= booking._id %>/cancel" method="POST" onsubmit="return confirm('Are you sure you want to cancel?');">
+                                <button class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.8rem; color: #ef4444; border-color: #ef4444; width: 100%;">Cancel Request</button>
+                            </form>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Review Modal -->
+                <div id="reviewModal-<%= booking._id %>" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+                    <div style="background: var(--surface); padding: 2rem; border-radius: var(--radius); width: 90%; max-width: 500px;">
+                        <h3 style="margin-bottom: 1rem;">Review <%= booking.providerId.userId.fullName %></h3>
+                        <form action="/user/review/<%= booking._id %>" method="POST">
+                            <div class="form-group">
+                                <label>Rating</label>
+                                <select name="rating" class="form-control" required>
+                                    <option value="5">5 Stars - Excellent</option>
+                                    <option value="4">4 Stars - Good</option>
+                                    <option value="3">3 Stars - Average</option>
+                                    <option value="2">2 Stars - Poor</option>
+                                    <option value="1">1 Star - Terrible</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Review</label>
+                                <textarea name="comment" class="form-control" rows="4" placeholder="Share your experience..." required></textarea>
+                            </div>
+                            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                                <button type="button" class="btn btn-outline" onclick="document.getElementById('reviewModal-<%= booking._id %>').style.display='none'">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Submit Review</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div style="text-align: center; padding: 5rem; background: var(--surface); border-radius: var(--radius); border: 2px dashed var(--border);">
+                <i class="fas fa-calendar-times" style="font-size: 4rem; color: var(--border); margin-bottom: 1.5rem;"></i>
+                <h2>No bookings found</h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">You haven't booked any services yet.</p>
+                <a href="/search" class="btn btn-primary">Find a Pro</a>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

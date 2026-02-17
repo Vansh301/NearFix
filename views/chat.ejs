@@ -1,0 +1,755 @@
+<%- include('partials/header') %>
+
+<style>
+    .chat-wrapper {
+        background: var(--surface);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        height: calc(100vh - 120px);
+        min-height: 500px;
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+        margin: 1rem 0;
+    }
+
+    .chat-sidebar {
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        background: #fcfdfe;
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .conversation-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .sidebar-search-input {
+        width: 100%;
+        padding: 0.6rem 1rem 0.6rem 2.5rem;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        background: #f8fafc;
+        font-size: 0.85rem;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .sidebar-search-input:focus {
+        border-color: var(--primary);
+        background: #fff;
+    }
+
+    .conversation-item {
+        padding: 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .conversation-item:hover {
+        background: #f8fafc;
+    }
+
+    .conversation-item.active {
+        background: #f0f7ff;
+        border-left: 4px solid var(--primary);
+    }
+
+    .avatar-circle {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+    }
+
+    .chat-main {
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        min-width: 0;
+        height: 100%;
+        overflow: hidden; /* Important for flex-basis scrolling children */
+    }
+
+    .chat-header {
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255,255,255,0.8);
+        backdrop-filter: blur(10px);
+        z-index: 10;
+    }
+
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        background: #f8fafc;
+        background-image: radial-gradient(#6366f111 1px, transparent 1px);
+        background-size: 20px 20px;
+        overscroll-behavior-y: contain; /* Prevent scroll chaining */
+        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    }
+
+    .message-bubble {
+        max-width: 65%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .message-content {
+        padding: 1rem 1.4rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+
+    .msg-mine {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+
+    .msg-mine .message-content {
+        background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+        color: #fff;
+        border-radius: 20px 20px 4px 20px;
+    }
+
+    .msg-theirs {
+        align-self: flex-start;
+        align-items: flex-start;
+    }
+
+    .msg-theirs .message-content {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid #e2e8f0;
+        border-radius: 20px 20px 20px 4px;
+    }
+
+    .msg-time {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .chat-input-area {
+        padding: 1.25rem 2rem;
+        background: #fff;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+    }
+
+    .chat-form {
+        display: flex;
+        gap: 1rem;
+        background: #f1f5f9;
+        padding: 0.4rem;
+        border-radius: 30px;
+        align-items: center;
+        border: 1.5px solid #e2e8f0;
+        transition: all 0.3s;
+    }
+
+    .chat-form:focus-within {
+        background: #fff;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .chat-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+        outline: none;
+    }
+
+    .send-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .send-btn:hover {
+        transform: scale(1.05);
+        background: #4f46e5;
+    }
+
+    /* Modern Scrollbar */
+    .messages-container::-webkit-scrollbar,
+    .conversation-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .messages-container::-webkit-scrollbar-thumb,
+    .conversation-list::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
+
+    .messages-container::-webkit-scrollbar-thumb:hover,
+    .conversation-list::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+
+    .unread-badge-hidden {
+        display: none !important;
+    }
+
+    /* Quote Message Styling */
+    .quote-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        color: #1e293b;
+    }
+
+    .msg-mine .quote-card {
+        border-color: rgba(255,255,255,0.3);
+    }
+
+    .quote-price {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin: 0.5rem 0;
+    }
+
+    /* Price Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .price-modal {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 900px) {
+        .chat-wrapper {
+            grid-template-columns: 1fr;
+        }
+        /* Toggle visibility based on state */
+        .mobile-active-chat .chat-sidebar { display: none; }
+        .mobile-active-chat .chat-main { display: flex; }
+        
+        .mobile-no-chat .chat-sidebar { display: flex; }
+        .mobile-no-chat .chat-main { display: none; }
+    }
+</style>
+
+<main class="container">
+    <div class="chat-wrapper <%= locals.activeChat ? 'mobile-active-chat' : 'mobile-no-chat' %>">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <!-- Current User Profile Header -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="avatar-circle" style="width: 42px; height: 42px; font-size: 1rem; box-shadow: none; border: 1px solid var(--border);">
+                            <%= currentUser.fullName.charAt(0) %>
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 800; font-size: 1.05rem; line-height: 1.2;"><%= currentUser.fullName %></span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">My Account</span>
+                        </div>
+                    </div>
+                    
+                    <% if (locals.unreadCount > 0) { %>
+                        <div id="side-unread-count" style="min-width: 22px; height: 22px; padding: 0 6px; background: #ef4444; color: white; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);">
+                            <%= unreadCount %>
+                        </div>
+                    <% } %>
+                </div>
+                <div style="position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                    <input type="text" placeholder="Search messages..." class="sidebar-search-input">
+                </div>
+            </div>
+            
+            <div class="conversation-list">
+                <% if (chats && chats.length > 0) { %>
+                    <% chats.forEach(chat => { %>
+                        <a href="/chat/<%= chat.otherUser._id %>" 
+                           id="sidebar-user-<%= chat.otherUser._id %>"
+                           class="conversation-item <%= activeChat && activeChat._id.toString() === chat.otherUser._id.toString() ? 'active' : '' %>">
+                            <div style="position: relative;">
+                                <div class="avatar-circle">
+                                    <%= chat.otherUser.fullName.charAt(0) %>
+                                </div>
+                                <div class="unread-badge <%= chat.unreadCount > 0 ? '' : 'unread-badge-hidden' %>" 
+                                     id="dot-<%= chat.otherUser._id %>" 
+                                     style="position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; background: #ef4444; border: 2px solid #fff; border-radius: 10px; color: white; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 5;">
+                                    <%= chat.unreadCount %>
+                                </div>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.2rem;">
+                                    <span style="font-weight: 700; font-size: 0.95rem;"><%= chat.otherUser.fullName %></span>
+                                    <span class="last-msg-time" style="font-size: 0.7rem; color: var(--text-muted);"><%= new Date(chat.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                                </div>
+                                <span class="last-msg-text" style="display: block; font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <%= chat.lastSender.toString() === currentUser._id.toString() ? 'You: ' : '' %><%= chat.lastMessage %>
+                                </span>
+                            </div>
+                        </a>
+                    <% }) %>
+                <% } else { %>
+                    <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
+                        <i class="fas fa-ghost" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.2;"></i>
+                        <p>No messages yet.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="chat-main">
+            <% if (activeChat) { %>
+                <div class="chat-header">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <!-- Mobile back button -->
+                        <a href="/chat" style="display: none;" class="mobile-only"><i class="fas fa-arrow-left"></i></a>
+                        
+                        <div class="avatar-circle" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1rem;">
+                            <%= activeChat.fullName.charAt(0) %>
+                        </div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; margin: 0;"><%= activeChat.fullName %></h4>
+                            <span style="font-size: 0.75rem; color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-outline" style="border-radius: 12px; padding: 0.6rem;"><i class="fas fa-video"></i></button>
+                        <button class="btn btn-outline" style="border-radius: 12px; padding: 0.6rem;"><i class="fas fa-info-circle"></i></button>
+                    </div>
+                </div>
+
+                <div id="messages" class="messages-container">
+                    <% if (messages && messages.length > 0) { %>
+                        <% messages.forEach(msg => { %>
+                            <div class="message-bubble <%= msg.sender.toString() === currentUser._id.toString() ? 'msg-mine' : 'msg-theirs' %>" id="msg-<%= msg._id %>">
+                                <div class="message-content">
+                                    <% if (msg.sender.toString() !== currentUser._id.toString()) { %>
+                                        <span style="font-size: 0.7rem; font-weight: 700; color: var(--primary); margin-bottom: 2px;"><%= activeChat.fullName.split(' ')[0] %></span>
+                                    <% } %>
+                                    <% if (msg.messageType === 'quote') { %>
+                                        <div class="quote-card" id="quote-<%= msg.bookingId ? msg.bookingId._id : '' %>">
+                                            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">Service Offer</div>
+                                            <p style="margin: 0; font-size: 0.9rem;"><%= msg.content %></p>
+                                            <div class="quote-price">₹<%= msg.proposedPrice %></div>
+                                            
+                                            <div class="quote-actions">
+                                                <% if (msg.bookingId && msg.bookingId.status === 'completed') { %>
+                                                    <div style="background: #ecfdf5; color: #059669; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px solid #10b981;">
+                                                        <i class="fas fa-check-double"></i> Service Completed
+                                                    </div>
+                                                    
+                                                    <% if (msg.bookingId.paymentStatus === 'paid') { %>
+                                                        <div style="margin-top: 0.75rem; color: #065f46; font-size: 0.75rem; text-align: center; font-weight: 600; background: #f0fdf4; padding: 0.5rem; border-radius: 6px;">
+                                                            <i class="fas fa-info-circle"></i> Final process finished. Payment has been received and confirmed.
+                                                        </div>
+                                                    <% } else if (currentUser.role === 'provider') { %>
+                                                        <button onclick="receivePayment('<%= msg.bookingId._id %>')" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #2563eb;">
+                                                            <i class="fas fa-hand-holding-dollar"></i> Payment Received
+                                                        </button>
+                                                    <% } else { %>
+                                                        <div style="margin-top: 0.75rem; color: #b45309; font-size: 0.75rem; text-align: center; font-weight: 600; background: #fffbeb; padding: 0.5rem; border-radius: 6px;">
+                                                            <i class="fas fa-clock"></i> Service completed. Waiting for provider to confirm payment.
+                                                        </div>
+                                                    <% } %>
+                                                <% } else if (msg.bookingId && msg.bookingId.status === 'confirmed') { %>
+                                                    <div style="background: #eff6ff; color: #1d4ed8; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem;">
+                                                        <i class="fas fa-check-double"></i> Confirmed
+                                                    </div>
+                                                    <% if (currentUser.role === 'provider') { %>
+                                                        <button onclick="completeProject('<%= msg.bookingId._id %>')" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #059669;">Mark as Complete</button>
+                                                    <% } %>
+                                                <% } else if (msg.bookingId && msg.bookingId.status === 'cancelled') { %>
+                                                    <div style="background: #fef2f2; color: #991b1b; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px solid #fecaca;">
+                                                        <i class="fas fa-times-circle"></i> Service Cancelled
+                                                    </div>
+                                                <% } else if (msg.bookingId && msg.bookingId.status === 'accepted') { %>
+                                                    <div style="background: #fffbeb; color: #b45309; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px dashed #f59e0b;">
+                                                        <i class="fas fa-clock"></i> Price Agreed & Accepted
+                                                    </div>
+                                                    <% if (currentUser.role === 'provider') { %>
+                                                        <button onclick="finalizeBooking('<%= msg.bookingId._id %>')" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #2563eb;">Final Confirm & Seal Deal</button>
+                                                    <% } else { %>
+                                                        <div style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem; margin-bottom: 0.5rem;">Waiting for worker's final seal...</div>
+                                                        <% if (msg.bookingId.paymentStatus === 'pending') { %>
+                                                            <button onclick="clientPay('<%= msg.bookingId._id %>', 'online')" class="btn btn-primary" style="width: 100%; font-size: 0.8rem; background: #10b981; border: none; font-weight: 700;">
+                                                                <i class="fas fa-credit-card"></i> Pay Now (Online)
+                                                            </button>
+                                                        <% } %>
+                                                    <% } %>
+                                                <% } else if (msg.sender.toString() !== currentUser._id.toString()) { 
+                                                    const bid = msg.bookingId ? msg.bookingId._id : '';
+                                                    const price = msg.proposedPrice || 0;
+                                                %>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                                        <button onclick="acceptQuote('<%= bid %>', '<%= price %>', 'cash')" class="btn" style="font-size: 0.75rem; padding: 0.5rem; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; font-weight: 700;">Pay Cash</button>
+                                                        <button onclick="acceptQuote('<%= bid %>', '<%= price %>', 'online')" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.5rem; background: #10b981; border: none; font-weight: 700;">Pay Online</button>
+                                                    </div>
+                                                <% } else { %>
+                                                    <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem;">Waiting for customer...</div>
+                                                    <% if (currentUser.role === 'provider') { 
+                                                        const bid = msg.bookingId ? msg.bookingId._id : '';
+                                                        const price = msg.proposedPrice || 0;
+                                                    %>
+                                                        <button onclick="acceptQuote('<%= bid %>', '<%= price %>', 'cash')" class="btn" style="width: 100%; font-size: 0.75rem; padding: 0.5rem; background: #2563eb; color: white; border: none; font-weight: 700; border-radius: 8px;">
+                                                            <i class="fas fa-check-double"></i> Confirm Cash Deal
+                                                        </button>
+                                                    <% } %>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% } else { %>
+                                        <p style="margin: 0;"><%= msg.content %></p>
+                                    <% } %>
+                                </div>
+                                <span class="msg-time"><%= new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </div>
+
+                <div class="chat-input-area">
+                    <form id="chat-form" class="chat-form">
+                        <% if (currentUser.role === 'provider') { %>
+                            <button type="button" onclick="openPriceModal()" id="price-btn" style="background: none; border: none; padding: 0 1rem; color: var(--primary); cursor: pointer;" title="Send Price Quote">
+                                <i class="fas fa-tag"></i>
+                            </button>
+                        <% } %>
+                        <input type="text" id="msg-input" class="chat-input" placeholder="Type your message here..." required autocomplete="off">
+                        <button type="submit" class="send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <script>
+                    const chatForm = document.getElementById('chat-form');
+                    const msgInput = document.getElementById('msg-input');
+                    const messagesContainer = document.getElementById('messages');
+                    const currentUserId = '<%= currentUser._id %>';
+                    const otherUserId = '<%= activeChat._id %>';
+                    let currentBookingId = '<%= locals.activeBooking ? activeBooking._id : "" %>';
+
+                    const room = [currentUserId, otherUserId].sort().join('-');
+                    socket.emit('join', room);
+                    socket.emit('join', currentUserId); // Join private room for notifications
+
+                    // Global notifications and sidebar reordering are now handled in main.js
+
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    msgInput.focus();
+
+                    function openPriceModal() {
+                        document.getElementById('price-modal-overlay').style.display = 'flex';
+                    }
+
+                    function closePriceModal() {
+                        document.getElementById('price-modal-overlay').style.display = 'none';
+                    }
+
+                    function sendQuote(e) {
+                        e.preventDefault();
+                        const price = document.getElementById('proposed-price').value;
+                        const desc = document.getElementById('quote-desc').value;
+                        
+                        if (price && desc) {
+                            socket.emit('sendMessage', {
+                                senderId: currentUserId,
+                                receiverId: otherUserId,
+                                message: desc,
+                                messageType: 'quote',
+                                proposedPrice: price,
+                                bookingId: currentBookingId,
+                                room: room
+                            });
+                            closePriceModal();
+                            document.getElementById('proposed-price').value = '';
+                            document.getElementById('quote-desc').value = '';
+                        }
+                    }
+
+                    const userRole = '<%= currentUser.role %>';
+
+                    function acceptQuote(bookingId, amount, method) {
+                        const msg = method === 'cash' ? 'Pay via Cash' : 'Pay Online';
+                        if (confirm(`Are you sure you want to accept this quote and ${msg} (₹${amount})?`)) {
+                            socket.emit('acceptQuote', { bookingId, amount, method, room });
+                        }
+                    }
+
+                    function finalizeBooking(bookingId) {
+                        if (confirm('Finalize this deal and confirm the booking?')) {
+                            socket.emit('finalConfirmBooking', { bookingId, room });
+                        }
+                    }
+
+                    function completeProject(bookingId) {
+                        if (confirm('Mark this project as complete?')) {
+                            socket.emit('completeBooking', { bookingId, room });
+                        }
+                    }
+
+                    function receivePayment(bookingId) {
+                        if (confirm('Confirm that you have received the payment for this service?')) {
+                            socket.emit('receivePayment', { bookingId, room });
+                        }
+                    }
+
+                    function clientPay(bookingId, method) {
+                        if (confirm(`Proceed to pay for this service?`)) {
+                            socket.emit('clientPay', { bookingId, method, room });
+                        }
+                    }
+
+                    socket.on('quoteUpdate', (data) => {
+                        const container = document.getElementById('quote-' + data.bookingId);
+                        if (container) {
+                            const actions = container.querySelector('.quote-actions');
+                            if (data.status === 'accepted') {
+                                let html = `
+                                    <div style="background: #fffbeb; color: #b45309; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px dashed #f59e0b;">
+                                        <i class="fas fa-clock"></i> Price Agreed & Accepted
+                                    </div>
+                                `;
+                                if (userRole === 'provider') {
+                                    html += `<button onclick="finalizeBooking('${data.bookingId}')" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #2563eb;">Final Confirm & Seal Deal</button>`;
+                                } else {
+                                    html += `<div style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem; margin-bottom: 0.5rem;">Waiting for worker's final seal...</div>`;
+                                    if (data.paymentStatus === 'pending') {
+                                        html += `
+                                            <button onclick="clientPay('${data.bookingId}', 'online')" class="btn btn-primary" style="width: 100%; font-size: 0.8rem; background: #10b981; border: none; font-weight: 700;">
+                                                <i class="fas fa-credit-card"></i> Pay Now (Online)
+                                            </button>
+                                        `;
+                                    }
+                                }
+                                actions.innerHTML = html;
+                            } else if (data.status === 'confirmed') {
+                                let html = `
+                                    <div style="background: #eff6ff; color: #1d4ed8; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem;">
+                                        <i class="fas fa-check-double"></i> Confirmed
+                                    </div>
+                                `;
+                                if (userRole === 'provider') {
+                                    html += `<button onclick="completeProject('${data.bookingId}')" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #059669;">Mark as Complete</button>`;
+                                }
+                                actions.innerHTML = html;
+                            } else if (data.status === 'completed') {
+                                if (data.paymentStatus === 'paid') {
+                                    actions.innerHTML = `
+                                        <div style="background: #ecfdf5; color: #059669; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px solid #10b981;">
+                                            <i class="fas fa-check-double"></i> Service Completed
+                                        </div>
+                                        <div style="margin-top: 0.75rem; color: #065f46; font-size: 0.75rem; text-align: center; font-weight: 600; background: #f0fdf4; padding: 0.5rem; border-radius: 6px;">
+                                            <i class="fas fa-info-circle"></i> Final process finished. Payment has been received and confirmed.
+                                        </div>
+                                    `;
+                                } else {
+                                    let html = `
+                                        <div style="background: #ecfdf5; color: #059669; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px solid #10b981;">
+                                            <i class="fas fa-check-double"></i> Service Completed
+                                        </div>
+                                    `;
+                                    if (userRole === 'provider') {
+                                        html += `
+                                            <button onclick="receivePayment('${data.bookingId}')" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #2563eb;">
+                                                <i class="fas fa-hand-holding-dollar"></i> Payment Received
+                                            </button>
+                                        `;
+                                    } else {
+                                        html += `
+                                            <div style="margin-top: 0.75rem; color: #b45309; font-size: 0.75rem; text-align: center; font-weight: 600; background: #fffbeb; padding: 0.5rem; border-radius: 6px;">
+                                                <i class="fas fa-clock"></i> Service completed. Waiting for provider to confirm payment.
+                                            </div>
+                                        `;
+                                    }
+                                    actions.innerHTML = html;
+                                }
+                            } else if (data.status === 'cancelled') {
+                                actions.innerHTML = `
+                                    <div style="background: #fef2f2; color: #991b1b; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px solid #fecaca;">
+                                        <i class="fas fa-times-circle"></i> Service Cancelled
+                                    </div>
+                                `;
+                            }
+                        }
+                    });
+
+                    chatForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const message = msgInput.value.trim();
+                        if (message) {
+                            socket.emit('sendMessage', {
+                                senderId: currentUserId,
+                                receiverId: otherUserId,
+                                message: message,
+                                messageType: 'text',
+                                room: room
+                            });
+                            msgInput.value = '';
+                        }
+                    });
+
+                    socket.on('message', (msg) => {
+                        const isMine = msg.sender === currentUserId;
+                        const div = document.createElement('div');
+                        div.className = `message-bubble ${isMine ? 'msg-mine' : 'msg-theirs'}`;
+
+                        const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        let nameHtml = '';
+                        if (!isMine) {
+                            // Fetch name from header or use a fallback
+                            const otherName = document.querySelector('.chat-header h4').innerText.split(' ')[0];
+                            nameHtml = `<span style="font-size: 0.7rem; font-weight: 700; color: var(--primary); margin-bottom: 2px;">${otherName}</span>`;
+                        }
+
+                        let contentHtml = `<p style="margin: 0;">${msg.content}</p>`;
+                        if (msg.messageType === 'quote') {
+                            // Update currentBookingId if we get a new one from a quote
+                            if (msg.bookingId && !currentBookingId) {
+                                currentBookingId = msg.bookingId;
+                            }
+                            
+                            const bid = msg.bookingId || currentBookingId;
+                            
+                            contentHtml = `
+                                <div class="quote-card" id="quote-${bid}">
+                                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">Service Offer</div>
+                                    <p style="margin: 0; font-size: 0.9rem;">${msg.content}</p>
+                                    <div class="quote-price">₹${msg.proposedPrice}</div>
+                                    <div class="quote-actions">
+                                        ${!isMine ? `
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                                                <button onclick="acceptQuote('${bid}', '${msg.proposedPrice}', 'cash')" class="btn" style="font-size: 0.75rem; padding: 0.5rem; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; font-weight: 700; border-radius: 8px;">Pay Cash</button>
+                                                <button onclick="acceptQuote('${bid}', '${msg.proposedPrice}', 'online')" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.5rem; background: #10b981; border: none; font-weight: 700; border-radius: 8px;">Pay Online</button>
+                                            </div>
+                                        ` : '<div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 1rem; font-weight: 600;">Waiting for customer...</div>'}
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        div.innerHTML = `
+                            <div class="message-content">
+                                ${contentHtml}
+                            </div>
+                            <span class="msg-time">${time}</span>
+                        `;
+                        messagesContainer.appendChild(div);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                        // Sidebar update for BOTH mine and theirs
+                        const otherPersonId = isMine ? otherUserId : msg.sender;
+                        const sidebarItem = document.getElementById(`sidebar-user-${otherPersonId}`);
+                        const conversationList = document.querySelector('.conversation-list');
+                        
+                        if (sidebarItem) {
+                            sidebarItem.querySelector('.last-msg-text').innerText = (isMine ? 'You: ' : '') + msg.content;
+                            sidebarItem.querySelector('.last-msg-time').innerText = time;
+                            conversationList.prepend(sidebarItem);
+                        }
+                    });
+                </script>
+            <% } else { %>
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fdfdfd; padding: 2rem;">
+                    <div style="width: 140px; height: 140px; background: #f1f5f9; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; transform: rotate(-5deg);">
+                        <i class="fas fa-paper-plane" style="font-size: 3.5rem; color: var(--primary); opacity: 0.4;"></i>
+                    </div>
+                    <h2 style="margin-bottom: 0.75rem; color: #1e293b;">Your Inbox</h2>
+                    <p style="text-align: center; max-width: 320px; color: var(--text-muted); line-height: 1.6;">Select a professional or customer from the list to start a conversation and manage your service details.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<!-- Price Quote Modal -->
+<div class="modal-overlay" id="price-modal-overlay">
+    <div class="price-modal">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fas fa-tag" style="color: var(--primary);"></i>
+            Send Service Quote
+        </h3>
+        <form onsubmit="sendQuote(event)">
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">Proposed Price (₹)</label>
+                <input type="number" id="proposed-price" required style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1.5px solid var(--border); outline: none; font-size: 1.25rem; font-weight: 700; color: var(--primary);" placeholder="0.00">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">Short Description</label>
+                <textarea id="quote-desc" required style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1.5px solid var(--border); outline: none; font-size: 0.9rem; min-height: 80px;" placeholder="e.g. Full repair including parts..."></textarea>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button type="button" onclick="closePriceModal()" class="btn btn-outline" style="width: 100%; justify-content: center;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Send Offer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

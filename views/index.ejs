@@ -1,0 +1,185 @@
+<%- include('partials/header') %>
+
+<main>
+    <section class="hero">
+        <div class="container">
+            <h1>Expert Help, Just a <br>Click Away.</h1>
+            <p>Book trusted local professionals for everything from plumbing to tutoring. Verified workers, transparent pricing.</p>
+            
+            <form action="/search" method="GET" class="search-bar">
+                <input type="text" name="category" class="search-input" placeholder="What service do you need?">
+                <input type="text" name="location" class="search-input" placeholder="Location">
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2.5rem; border-radius: 16px;">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </form>
+            
+            <div style="margin-top: 3rem; display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;">
+                <a href="/search?category=Electrician" class="btn btn-outline" style="font-size: 0.9rem;">
+                    <i class="fas fa-plug" style="color: #eab308;"></i> Electrician
+                </a>
+                <a href="/search?category=Plumber" class="btn btn-outline" style="font-size: 0.9rem;">
+                    <i class="fas fa-faucet" style="color: #3b82f6;"></i> Plumber
+                </a>
+                <a href="/search?category=Cleaner" class="btn btn-outline" style="font-size: 0.9rem;">
+                    <i class="fas fa-broom" style="color: #10b981;"></i> Cleaner
+                </a>
+                <a href="/search?category=Mechanic" class="btn btn-outline" style="font-size: 0.9rem;">
+                    <i class="fas fa-tools" style="color: #64748b;"></i> Mechanic
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sulekha-style Quick Help Section -->
+    <section style="background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); padding: 3rem 0; border-bottom: 1px solid var(--border);">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;">
+            <div style="flex: 2; min-width: 300px;">
+                <h2 style="font-size: 1.5rem; color: var(--secondary); margin-bottom: 0.5rem;">Can't find what you need?</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; text-align: left;">Tell us what you're looking for and we'll have local experts contact you with free quotes.</p>
+            </div>
+            <div style="flex: 1; min-width: 250px; display: flex; gap: 1rem; justify-content: flex-end;">
+                <button onclick="openRequirementModal()" class="btn btn-primary" style="padding: 1rem 2rem; background: #2563eb; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);">
+                    <i class="fas fa-paper-plane"></i> Get Free Quotes
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Requirement Modal (Sulekha Style) -->
+    <div id="requirementModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; width: 95%; max-width: 550px; border-radius: 24px; padding: 2.5rem; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h2 style="font-size: 1.5rem; color: var(--secondary);">Post Your Requirement</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Verified professionals will reach out to you.</p>
+                </div>
+                <button onclick="closeRequirementModal()" style="background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer;">&times;</button>
+            </div>
+            
+            <form action="/user/requirement" method="POST">
+                <div class="form-group">
+                    <label>What service do you need?</label>
+                    <select name="category" class="form-control" required style="padding: 0.75rem;">
+                        <option value="Electrician">Electrician</option>
+                        <option value="Plumber">Plumber</option>
+                        <option value="Cleaner">Home Cleaning</option>
+                        <option value="Mechanic">Car Mechanic</option>
+                        <option value="Tutor">Home Tutor</option>
+                        <option value="Painter">House Painting</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>How urgent is this?</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <label style="border: 2px solid #f1f5f9; padding: 1rem; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+                            <input type="radio" name="urgency" value="emergency" required> 
+                            <span>🚨 Emergency</span>
+                        </label>
+                        <label style="border: 2px solid #f1f5f9; padding: 1rem; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+                            <input type="radio" name="urgency" value="standard" checked> 
+                            <span>📅 Standard</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tell us more details</label>
+                    <textarea name="description" class="form-control" rows="4" placeholder="Mention what's wrong or what you need exactly..." required style="border-radius: 12px; font-family: inherit; font-size: 0.95rem;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Approx Budget (₹)</label>
+                    <input type="text" name="budget" class="form-control" placeholder="e.g. 500 - 2000" style="border-radius: 12px;">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; margin-top: 1rem; background: #2563eb; border-radius: 12px; font-weight: 700;">
+                    Submit Requirement
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openRequirementModal() {
+            const isLoggedIn = Boolean("<%= locals.currentUser ? 'true' : '' %>");
+            if (!isLoggedIn) {
+                window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+            document.getElementById('requirementModal').style.display = 'flex';
+        }
+        function closeRequirementModal() {
+            document.getElementById('requirementModal').style.display = 'none';
+        }
+    </script>
+
+    <section class="container" style="padding: 4rem 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+            <div>
+                <h2 style="font-size: clamp(1.5rem, 5vw, 2rem);">Top Rated Professionals</h2>
+                <p style="color: var(--text-muted);">Highly recommended workers in your area.</p>
+            </div>
+            <a href="/search" class="nav-link" style="color: var(--primary); font-weight: 700;">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+
+        <div class="grid">
+            <% if (topProviders && topProviders.length > 0) { %>
+                <% topProviders.forEach(provider => { %>
+                    <% if (provider.userId) { %>
+                        <div class="card" onclick="window.location.href='/profile/<%= provider._id %>'">
+                            <img src="<%= provider.userId.profileImage %>" alt="Provider" class="card-img" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= provider.userId.fullName %>&background=6366f1&color=fff'">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span class="badge badge-success">Verified</span>
+                                <span style="font-weight: 700;"><i class="fas fa-star" style="color: #f59e0b;"></i> <%= Number(provider.averageRating).toFixed(1) %></span>
+                            </div>
+                            <h3 style="margin-bottom: 0.25rem;"><%= provider.userId.fullName %></h3>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                                <%= provider.services.map(s => s.category).join(', ') %>
+                            </p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; padding-top: 1rem;">
+                                <span style="color: var(--text-muted); font-size: 0.9rem;"><i class="fas fa-location-dot"></i> <%= provider.userId.address.city || 'Local' %></span>
+                                <span style="font-weight: 700; color: var(--primary);">View Profile</span>
+                            </div>
+                        </div>
+                    <% } %>
+                <% }) %>
+            <% } else { %>
+                <div style="grid-column: 1/-1; text-align: center; padding: 3rem; background: var(--surface); border-radius: var(--radius); border: 2px dashed var(--border);">
+                    <i class="fas fa-users-slash" style="font-size: 3rem; color: var(--border); margin-bottom: 1rem;"></i>
+                    <p>No providers available yet. Be the first to join!</p>
+                </div>
+            <% } %>
+        </div>
+    </section>
+
+    <section style="background: var(--surface); padding: 5rem 0;">
+        <div class="container mobile-stack" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 3rem; align-items: center;">
+            <div>
+                <h2 style="font-size: clamp(1.8rem, 6vw, 2.5rem); margin-bottom: 1.5rem;">Are you a local expert?</h2>
+                <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem;">Join NearFix to grow your business, manage your schedule, and reach more customers in your neighborhood.</p>
+                <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <i class="fas fa-check-circle" style="color: var(--primary);"></i>
+                        <span>Zero commission for the first month</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <i class="fas fa-check-circle" style="color: var(--primary);"></i>
+                        <span>Easy-to-use booking dashboard</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <i class="fas fa-check-circle" style="color: var(--primary);"></i>
+                        <span>Direct chat with customers</span>
+                    </div>
+                </div>
+                <a href="/auth/register?role=provider" class="btn btn-primary" style="width: fit-content;">Register as Worker</a>
+            </div>
+            <div style="background: var(--background); height: 350px; border-radius: 30px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-hard-hat" style="font-size: clamp(5rem, 20vw, 8rem); color: var(--primary); opacity: 0.2;"></i>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>

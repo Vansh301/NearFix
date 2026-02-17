@@ -1,0 +1,157 @@
+<%- include('partials/header') %>
+
+<main class="container" style="padding: 4rem 0;">
+    <div style="display: grid; grid-template-columns: 1fr 380px; gap: 4rem;">
+        <!-- Profile Info -->
+        <div>
+            <div style="display: flex; gap: 2rem; margin-bottom: 3rem; align-items: center;">
+                <img src="<%= provider.userId.profileImage %>" style="width: 150px; height: 150px; border-radius: 24px; object-fit: cover; box-shadow: var(--shadow-lg);" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= provider.userId.fullName %>&background=6366f1&color=fff'">
+                <div>
+                    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;"><%= provider.userId.fullName %></h1>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified Expert</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-star" style="color: #f59e0b;"></i>
+                            <span style="font-weight: 700; font-size: 1.1rem;"><%= Number(provider.averageRating).toFixed(1) %></span>
+                            <span style="color: var(--text-muted);">(<%= provider.totalReviews %> reviews)</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 1.1rem;"><i class="fas fa-location-dot"></i> <%= provider.userId.address.city || 'Available Locally' %></p>
+                </div>
+            </div>
+
+            <div style="background: var(--surface); padding: 2.5rem; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 3rem;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">About</h3>
+                <p style="white-space: pre-wrap; color: var(--text-muted); line-height: 1.8;"><%= provider.bio %></p>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+                    <div>
+                        <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Experience</span>
+                        <span style="font-weight: 700; font-size: 1.2rem;"><%= provider.experience %> Years</span>
+                    </div>
+                    <div>
+                        <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Completed Jobs</span>
+                        <span style="font-weight: 700; font-size: 1.2rem;">45+</span>
+                    </div>
+                    <div>
+                        <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Response Time</span>
+                        <span style="font-weight: 700; font-size: 1.2rem;">< 2 Hours</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 3rem;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">Services Offered</h3>
+                <div style="display: grid; gap: 1rem;">
+                    <% provider.services.forEach(service => { %>
+                        <div style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4 style="margin-bottom: 0.25rem;"><%= service.category %></h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;"><%= service.description || 'Professional service with guaranteed quality.' %></p>
+                            </div>
+                            <span style="font-weight: 700; color: var(--primary); font-size: 1.1rem;"><%= service.priceRange || 'Contact for Quote' %></span>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 3rem;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">Recent Reviews</h3>
+                <% if (reviews && reviews.length > 0) { %>
+                    <div style="display: grid; gap: 1.5rem;">
+                        <% reviews.forEach(review => { %>
+                            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <div style="display: flex; gap: 1rem; align-items: center;">
+                                        <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;"><%= review.customerId.fullName.charAt(0) %></div>
+                                        <div>
+                                            <span style="font-weight: 700; display: block;"><%= review.customerId.fullName %></span>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(review.createdAt).toLocaleDateString('en-GB') %></span>
+                                        </div>
+                                    </div>
+                                    <div style="color: #f59e0b;">
+                                        <% for(let i=0; i<review.rating; i++) { %>
+                                            <i class="fas fa-star"></i>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <p style="color: var(--text-muted);"><%= review.comment %></p>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <p style="color: var(--text-muted); font-style: italic;">No reviews yet.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Booking Sidebar -->
+        <aside>
+            <div style="background: var(--surface); padding: 2.5rem; border-radius: var(--radius); border: 1px solid var(--primary); box-shadow: var(--shadow-lg); position: sticky; top: 100px;">
+                <h3 style="margin-bottom: 1.5rem;">Book This Service</h3>
+                <% if (currentUser && currentUser.role === 'customer') { %>
+                    <form action="/user/book/<%= provider._id %>" method="POST">
+                        <div class="form-group">
+                            <label>Choose Service</label>
+                            <select name="serviceCategory" class="form-control" required>
+                                <% provider.services.forEach(service => { %>
+                                    <option value="<%= service.category %>"><%= service.category %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Appointment Date</label>
+                            <input type="date" name="bookingDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Preferred Time</label>
+                            <select name="bookingTime" class="form-control" required>
+                                <option>09:00 AM</option>
+                                <option>10:00 AM</option>
+                                <option>11:00 AM</option>
+                                <option>02:00 PM</option>
+                                <option>04:00 PM</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes for Provider</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Explain your requirements..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;">Request Booking</button>
+                    </form>
+                    
+                    <a href="/chat/<%= provider.userId._id %>" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 1rem; margin-top: 1rem; border-color: var(--primary); color: var(--primary);">
+                        <i class="fas fa-message"></i> Send Message
+                    </a>
+<% } else if (currentUser && currentUser.role === 'provider' && currentUser._id.toString() !== provider.userId._id.toString()) { %>
+                    <a href="/chat/<%= provider.userId._id %>" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 1rem; border-color: var(--primary); color: var(--primary);">
+                        <i class="fas fa-message"></i> Message Colleague
+                    </a>
+<% } else if (!currentUser) { %>
+                    <div style="text-align: center; padding: 1rem;">
+                        <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Please login to book a service.</p>
+                        <a href="/auth/login" class="btn btn-primary" style="width: 100%; justify-content: center;">Login to Book</a>
+                    </div>
+                <% } else { %>
+                    <div style="background: var(--background); padding: 1.5rem; border-radius: 12px; text-align: center;">
+                        <i class="fas fa-info-circle" style="color: var(--primary); margin-bottom: 1rem; font-size: 1.5rem;"></i>
+                        <p style="font-size: 0.9rem;">Service providers cannot book other providers. Please use a customer account.</p>
+                    </div>
+                <% } %>
+                
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+                    <div style="display: flex; gap: 1rem; align-items: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                        <i class="fas fa-shield-halved"></i>
+                        <span>Secure payment upon completion</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center; color: var(--text-muted); font-size: 0.9rem;">
+                        <i class="fas fa-user-check"></i>
+                        <span>Verified background checks</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<%- include('partials/footer') %>

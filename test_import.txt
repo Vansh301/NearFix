@@ -1,0 +1,27 @@
+object
+{
+  errors: {
+    AuthenticationError: [class AuthenticationError extends Error],
+    IncorrectUsernameError: [class IncorrectUsernameError extends AuthenticationError],
+    IncorrectPasswordError: [class IncorrectPasswordError extends AuthenticationError],
+    MissingUsernameError: [class MissingUsernameError extends AuthenticationError],
+    MissingPasswordError: [class MissingPasswordError extends AuthenticationError],
+    UserExistsError: [class UserExistsError extends AuthenticationError],
+    NoSaltValueStoredError: [class NoSaltValueStoredError extends AuthenticationError],
+    AttemptTooSoonError: [class AttemptTooSoonError extends AuthenticationError],
+    TooManyAttemptsError: [class TooManyAttemptsError extends AuthenticationError]
+  },
+  default: [Function: passportLocalMongoose] {
+    errors: {
+      AuthenticationError: [class AuthenticationError extends Error],
+      IncorrectUsernameError: [class IncorrectUsernameError extends AuthenticationError],
+      IncorrectPasswordError: [class IncorrectPasswordError extends AuthenticationError],
+      MissingUsernameError: [class MissingUsernameError extends AuthenticationError],
+      MissingPasswordError: [class MissingPasswordError extends AuthenticationError],
+      UserExistsError: [class UserExistsError extends AuthenticationError],
+      NoSaltValueStoredError: [class NoSaltValueStoredError extends AuthenticationError],
+      AttemptTooSoonError: [class AttemptTooSoonError extends AuthenticationError],
+      TooManyAttemptsError: [class TooManyAttemptsError extends AuthenticationError]
+    }
+  }
+}
