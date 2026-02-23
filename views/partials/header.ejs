@@ -61,9 +61,9 @@
         </div>
     <% } %>
 
+    <% if (locals.currentUser) { %>
     <script>
-        <% if (locals.currentUser) { %>
-            window.currentUserId = '<%= currentUser._id %>';
-        <% } %>
+        window.currentUserId = '<%= currentUser._id %>';
     </script>
+    <% } %>
     <script src="/js/main.js"></script>
