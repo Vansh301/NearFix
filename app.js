@@ -89,6 +89,8 @@ console.log('Mounting /admin');
 app.use('/admin', require('./routes/admin'));
 console.log('Mounting /chat');
 app.use('/chat', require('./routes/chat'));
+console.log('Mounting /payment');
+app.use('/payment', require('./routes/payment'));
 
 // Socket.io logic
 io.on('connection', (socket) => {
@@ -323,6 +325,7 @@ io.on('connection', (socket) => {
         try {
             const Booking = require('./models/Booking');
             const Provider = require('./models/Provider');
+            const Message = require('./models/Message');
             const booking = await Booking.findById(data.bookingId);
             if (booking) {
                 booking.status = 'completed';
@@ -333,23 +336,41 @@ io.on('connection', (socket) => {
                     $inc: { earnings: booking.totalAmount || 0 }
                 });
 
-                io.to(data.room).emit('quoteUpdate', {
-                    bookingId: data.bookingId,
-                    status: 'completed',
-                    message: 'Project completed!'
-                });
-
-                // Send Final Notification to Client
+                // Generate professional completion & review request message
                 const populatedBooking = await booking.populate('providerId customerId');
-                const customerUserId = populatedBooking.customerId._id;
-                
-                // Get provider name
                 const providerObj = await Provider.findById(populatedBooking.providerId._id).populate('userId');
                 const workerName = providerObj.userId.fullName;
 
-                io.to(`user-${customerUserId}`).emit('notification', {
+                const completionMsg = new Message({
+                    sender: providerObj.userId._id,
+                    receiver: populatedBooking.customerId._id,
+                    content: `Success! Your project is now complete. 🛠️✅\n\nIt was a pleasure serving you! Please consider leaving a review to help me improve. Thank you!`,
+                    messageType: 'text',
+                    bookingId: booking._id
+                });
+                await completionMsg.save();
+
+                // 1. Update the quote card status
+                io.to(data.room).emit('quoteUpdate', {
+                    bookingId: data.bookingId,
+                    status: 'completed',
+                    paymentStatus: booking.paymentStatus,
+                    message: 'Project completed!'
+                });
+
+                // 2. Emit the chat message live
+                io.to(data.room).emit('message', {
+                    sender: providerObj.userId._id.toString(),
+                    content: completionMsg.content,
+                    messageType: 'text',
+                    bookingId: booking._id,
+                    createdAt: completionMsg.createdAt
+                });
+
+                // 3. Send Toast Notification
+                io.to(`user-${populatedBooking.customerId._id}`).emit('notification', {
                     title: 'Mission Accomplished! ✅',
-                    content: `${workerName} has marked your service as completed. Everything is done!`,
+                    content: `${workerName} has completed the service. Please leave a review!`,
                     type: 'success',
                     bookingId: booking._id
                 });

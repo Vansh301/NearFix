@@ -62,8 +62,7 @@
                                             <i class="fas fa-money-bill-wave"></i> Pay via Cash
                                         </button>
                                     </form>
-                                    <form action="/user/booking/<%= booking._id %>/pay" method="POST" style="flex: 1;">
-                                        <input type="hidden" name="method" value="online">
+                                    <form action="/payment/create-checkout-session/<%= booking._id %>" method="POST" style="flex: 1;">
                                         <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.6rem; font-size: 0.85rem; background: #10b981; border: none; font-weight: 700; border-radius: 10px;">
                                             <i class="fas fa-credit-card"></i> Pay Online
                                         </button>

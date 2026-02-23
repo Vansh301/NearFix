@@ -398,16 +398,21 @@
                                             <div class="quote-price">₹<%= msg.proposedPrice %></div>
                                             
                                             <div class="quote-actions">
-                                                <% if (msg.bookingId && msg.bookingId.status === 'completed') { %>
-                                                    <div style="background: #ecfdf5; color: #059669; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px solid #10b981;">
-                                                        <i class="fas fa-check-double"></i> Service Completed
-                                                    </div>
-                                                    
-                                                    <% if (msg.bookingId.paymentStatus === 'paid') { %>
-                                                        <div style="margin-top: 0.75rem; color: #065f46; font-size: 0.75rem; text-align: center; font-weight: 600; background: #f0fdf4; padding: 0.5rem; border-radius: 6px;">
-                                                            <i class="fas fa-info-circle"></i> Final process finished. Payment has been received and confirmed.
+                                                    <% if (msg.bookingId && msg.bookingId.status === 'completed') { %>
+                                                        <div style="background: #ecfdf5; color: #059669; padding: 0.75rem; border-radius: 8px; font-weight: 700; text-align: center; font-size: 0.85rem; border: 1.5px solid #10b981;">
+                                                            <i class="fas fa-check-double"></i> Service Completed
                                                         </div>
-                                                    <% } else if (currentUser.role === 'provider') { %>
+                                                        
+                                                        <% if (msg.bookingId.paymentStatus === 'paid') { %>
+                                                            <div style="margin-top: 0.75rem; color: #065f46; font-size: 0.75rem; text-align: center; font-weight: 600; background: #f0fdf4; padding: 0.5rem; border-radius: 6px;">
+                                                                <i class="fas fa-info-circle"></i> Final process finished. Payment has been received and confirmed.
+                                                            </div>
+                                                            <% if (currentUser.role === 'customer' && !msg.bookingId.reviewed) { %>
+                                                                <a href="/user/bookings" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #6366f1;">
+                                                                    <i class="fas fa-star"></i> Leave Review Now
+                                                                </a>
+                                                            <% } %>
+                                                        <% } else if (currentUser.role === 'provider') { %>
                                                         <button onclick="receivePayment('<%= msg.bookingId._id %>')" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #2563eb;">
                                                             <i class="fas fa-hand-holding-dollar"></i> Payment Received
                                                         </button>
@@ -537,7 +542,16 @@
                     function acceptQuote(bookingId, amount, method) {
                         const msg = method === 'cash' ? 'Pay via Cash' : 'Pay Online';
                         if (confirm(`Are you sure you want to accept this quote and ${msg} (₹${amount})?`)) {
-                            socket.emit('acceptQuote', { bookingId, amount, method, room });
+                            if (method === 'online') {
+                                // For online, we redirect to stripe
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = `/payment/create-checkout-session/${bookingId}`;
+                                document.body.appendChild(form);
+                                form.submit();
+                            } else {
+                                socket.emit('acceptQuote', { bookingId, amount, method, room });
+                            }
                         }
                     }
 
@@ -561,7 +575,15 @@
 
                     function clientPay(bookingId, method) {
                         if (confirm(`Proceed to pay for this service?`)) {
-                            socket.emit('clientPay', { bookingId, method, room });
+                            if (method === 'online') {
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = `/payment/create-checkout-session/${bookingId}`;
+                                document.body.appendChild(form);
+                                form.submit();
+                            } else {
+                                socket.emit('clientPay', { bookingId, method, room });
+                            }
                         }
                     }
 
@@ -607,6 +629,11 @@
                                         <div style="margin-top: 0.75rem; color: #065f46; font-size: 0.75rem; text-align: center; font-weight: 600; background: #f0fdf4; padding: 0.5rem; border-radius: 6px;">
                                             <i class="fas fa-info-circle"></i> Final process finished. Payment has been received and confirmed.
                                         </div>
+                                        ${userRole === 'customer' ? `
+                                            <a href="/user/bookings" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; background: #6366f1;">
+                                                <i class="fas fa-star"></i> Leave Review Now
+                                            </a>
+                                        ` : ''}
                                     `;
                                 } else {
                                     let html = `
