@@ -276,14 +276,21 @@ router.post('/booking/:id/pay', isCustomer, async (req, res) => {
 
             booking.paymentMethod = method;
             booking.paymentStatus = 'paid';
+            booking.status = 'completed'; // Automatic completion after payment
             await booking.save();
+
+            // Increment provider's earnings
+            const Provider = require('../models/Provider');
+            await Provider.findByIdAndUpdate(booking.providerId, {
+                $inc: { earnings: booking.totalAmount || 0 }
+            });
 
             // 1. Send automated chat notification
             const Message = require('../models/Message');
             const payMsg = new Message({
                 sender: req.user._id,
-                receiver: booking.providerId, // Note: Need to verify if this is UserID or ProviderID
-                content: `I've confirmed payment via ${method === 'cash' ? 'Cash' : 'Online'}. ✅\nPlease complete the project once the service is finished.`,
+                receiver: booking.providerId, 
+                content: `I've confirmed payment via ${method === 'cash' ? 'Cash' : 'Online'}. ✅ Service is marked as completed.`,
                 messageType: 'text',
                 bookingId: booking._id
             });
@@ -305,19 +312,37 @@ router.post('/booking/:id/pay', isCustomer, async (req, res) => {
                     method: method 
                 });
 
-                // Premium Toast Notification
-                io.to(targetRoom).emit('notification', {
-                    title: 'Payment Received! 💰',
-                    content: `${req.user.fullName} has confused payment via ${method.toUpperCase()}. You can now complete the job.`,
-                    type: 'success', // Green theme
-                    senderId: req.user._id.toString(),
-                    senderName: req.user.fullName,
+                // Review Notification (to Customer)
+                io.to(`user-${req.user._id}`).emit('notification', {
+                    title: 'Job Well Done! 🌟',
+                    content: 'Your payment is confirmed. Please take a moment to rate the service!',
+                    type: 'success',
                     bookingId: booking._id.toString()
                 });
 
-                // Chat message emit
-                const chatRoom = [req.user._id.toString(), populatedBooking.providerId.userId.toString()].sort().join('-');
-                io.to(chatRoom).emit('message', {
+                // 3. New: Send automatic chat message for review record
+                const reviewMsg = new Message({
+                    sender: populatedBooking.providerId.userId,
+                    receiver: req.user._id,
+                    content: `Payment received via ${method.toUpperCase()}! 💰 Thank you for choosing my service.\n\nPlease consider leaving a quick review! ⭐`,
+                    messageType: 'text',
+                    bookingId: booking._id
+                });
+                await reviewMsg.save();
+
+                const chatRoomName = [req.user._id.toString(), populatedBooking.providerId.userId.toString()].sort().join('-');
+                
+                // Emit Review Message
+                io.to(chatRoomName).emit('message', {
+                    sender: populatedBooking.providerId.userId.toString(),
+                    content: reviewMsg.content,
+                    messageType: 'text',
+                    bookingId: booking._id.toString(),
+                    createdAt: reviewMsg.createdAt
+                });
+
+                // Emit Payment Confirmation Message
+                io.to(chatRoomName).emit('message', {
                     sender: req.user._id.toString(),
                     content: payMsg.content,
                     messageType: 'text',

@@ -82,30 +82,64 @@ router.get('/success/:bookingId', isCustomer, async (req, res) => {
                 booking.paymentStatus = 'paid';
                 booking.paymentMethod = 'online';
                 
-                // If the booking was pending/received, accept it automatically on payment
-                if (booking.status === 'pending') {
-                    booking.status = 'accepted';
-                    // Synchronize totalAmount if it was just a quote
-                    if (booking.totalAmount <= 0) {
-                        booking.totalAmount = booking.proposedAmount;
-                    }
+                // Set status to completed immediately after payment
+                booking.status = 'completed';
+                
+                // Synchronize totalAmount if it was just a quote
+                if (booking.totalAmount <= 0) {
+                    booking.totalAmount = booking.proposedAmount;
                 }
                 
                 await booking.save();
 
-                // Notify provider (similar to manual payment logic)
+                // Increment provider's earnings immediately
+                const Provider = require('../models/Provider');
+                await Provider.findByIdAndUpdate(booking.providerId, {
+                    $inc: { earnings: booking.totalAmount || 0 }
+                });
+
+                // Notify provider
                 const io = req.app.get('io');
                 if (io) {
                     const providerUserId = booking.providerId.userId;
                     io.to(`user-${providerUserId}`).emit('notification', {
-                        title: 'Payment Confirmed! 💰',
-                        content: `${req.user.fullName} has paid ₹${booking.totalAmount || booking.proposedAmount} via Stripe. Check your dashboard.`,
+                        title: 'Booking Completed! 💰',
+                        content: `${req.user.fullName} has paid ₹${booking.totalAmount} via Stripe. Service is marked as completed.`,
                         type: 'success',
                         bookingId: booking._id
                     });
+
+                    // Notify customer to leave a review
+                    io.to(`user-${req.user._id}`).emit('notification', {
+                        title: 'Service Completed! ✅',
+                        content: 'Payment successful! Please take a moment to rate your experience.',
+                        type: 'success',
+                        bookingId: booking._id
+                    });
+
+                    // 3. Send automatic chat message for review record
+                    const Message = require('../models/Message');
+                    const reviewMsg = new Message({
+                        sender: booking.providerId.userId,
+                        receiver: req.user._id,
+                        content: `Payment received! 💰 Thank you for choosing my service. Your project is now officially complete.\n\nCould you please take 10 seconds to rate your experience? It helps me a lot! ⭐`,
+                        messageType: 'text',
+                        bookingId: booking._id
+                    });
+                    await reviewMsg.save();
+
+                    // Emit message to the chat room
+                    const chatRoom = [req.user._id.toString(), booking.providerId.userId.toString()].sort().join('-');
+                    io.to(chatRoom).emit('message', {
+                        sender: booking.providerId.userId.toString(),
+                        content: reviewMsg.content,
+                        messageType: 'text',
+                        bookingId: booking._id,
+                        createdAt: reviewMsg.createdAt
+                    });
                 }
 
-                req.flash('success', 'Payment successful! Thank you for using NearFix.');
+                req.flash('success', 'Payment successful! Service marked as completed.');
             }
         }
         res.redirect('/user/bookings');

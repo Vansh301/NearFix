@@ -279,37 +279,72 @@ io.on('connection', (socket) => {
             if (booking && booking.paymentStatus === 'pending') {
                 booking.paymentMethod = data.method || 'online';
                 booking.paymentStatus = 'paid';
+                booking.status = 'completed'; // Automatic completion after payment
+                
+                // Ensure totalAmount is set if it was just a quote
+                if (booking.totalAmount <= 0 && booking.proposedAmount > 0) {
+                    booking.totalAmount = booking.proposedAmount;
+                }
+                
                 await booking.save();
 
-                // Increment earnings if status is completed
-                if (booking.status === 'completed') {
-                    await Provider.findByIdAndUpdate(booking.providerId, {
-                        $inc: { earnings: booking.totalAmount || 0 }
-                    });
-                }
+                // Increment earnings immediately
+                await Provider.findByIdAndUpdate(booking.providerId, {
+                    $inc: { earnings: booking.totalAmount || 0 }
+                });
 
                 io.to(data.room).emit('quoteUpdate', {
                     bookingId: data.bookingId,
-                    status: booking.status,
+                    status: 'completed',
                     paymentStatus: 'paid',
-                    message: `Payment Confirmed (${booking.paymentMethod === 'cash' ? 'Cash' : 'Online'})`
+                    message: `Payment Confirmed & Service Completed! ✅`
                 });
 
-                // Send Message to Worker
+                // Send Message to Worker (Payment Confirmation)
                 const Message = require('./models/Message');
                 const user = await User.findById(booking.customerId);
+                const populatedBooking = await booking.populate('providerId');
+                const providerUserId = populatedBooking.providerId.userId;
+
                 const payMsg = new Message({
                     sender: booking.customerId,
-                    receiver: (await booking.populate('providerId')).providerId.userId,
-                    content: `I've confirmed payment via ${booking.paymentMethod === 'cash' ? 'Cash' : 'Online'}. ✅`,
+                    receiver: providerUserId,
+                    content: `I've confirmed payment via ${booking.paymentMethod === 'cash' ? 'Cash' : 'Online'}. ✅ Service is now complete.`,
                     messageType: 'text',
                     bookingId: booking._id
                 });
                 await payMsg.save();
 
-                // Notify Worker
-                const providerUserId = (await booking.populate('providerId')).providerId.userId;
-                io.to(`user-${providerUserId}`).emit('notification', {
+                // Send Automatic Message from Provider (Review Request)
+                const reviewMsg = new Message({
+                    sender: providerUserId,
+                    receiver: booking.customerId,
+                    content: `Thank you for the payment! 💰 Your support helps me a lot.\n\nPlease take a moment to leave a review of my service! ⭐`,
+                    messageType: 'text',
+                    bookingId: booking._id
+                });
+                await reviewMsg.save();
+
+                // 1. Emit Payment Confirmation Live
+                io.to(data.room).emit('message', {
+                    sender: booking.customerId.toString(),
+                    content: payMsg.content,
+                    messageType: 'text',
+                    bookingId: booking._id.toString(),
+                    createdAt: payMsg.createdAt
+                });
+
+                // 2. Emit Review Request Live
+                io.to(data.room).emit('message', {
+                    sender: providerUserId.toString(),
+                    content: reviewMsg.content,
+                    messageType: 'text',
+                    bookingId: booking._id.toString(),
+                    createdAt: reviewMsg.createdAt
+                });
+
+                // Notify Worker (already have providerUserId from above)
+                io.to(`user-${providerUserId.toString()}`).emit('notification', {
                     title: 'Payment Confirmed! 💰',
                     content: `${user.fullName} has paid for the service. Check your balance!`,
                     type: 'success',

@@ -34,10 +34,13 @@ router.get('/dashboard', isProvider, async (req, res) => {
 
         // Sulekha-style: Fetch matching leads (Requirements)
         const categories = provider.services.map(s => s.category);
-        const leads = await Requirement.find({
+        let leads = await Requirement.find({
             category: { $in: categories },
             status: 'open'
         }).populate('customerId').sort({ urgency: -1, createdAt: -1 });
+
+        // Safety Fix: Filter out leads where customer account no longer exists
+        leads = leads.filter(lead => lead.customerId !== null);
 
         res.render('provider/dashboard', { bookings, stats, provider, leads });
     } catch (err) {

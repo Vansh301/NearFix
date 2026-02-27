@@ -237,7 +237,7 @@
                                     </div>
                                     <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;"><%= lead.description %></h4>
                                     <div style="display: flex; gap: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">
-                                        <span><i class="fas fa-user"></i> <%= lead.customerId.fullName %></span>
+                                        <span><i class="fas fa-user"></i> <%= lead.customerId ? lead.customerId.fullName : 'Anonymous User' %></span>
                                         <span><i class="fas fa-clock"></i> <%= new Date(lead.createdAt).toLocaleDateString('en-GB') %></span>
                                         <% if (lead.budget) { %>
                                             <span style="color: #059669; font-weight: 700;"><i class="fas fa-wallet"></i> Budget: ₹<%= lead.budget %></span>
@@ -245,17 +245,19 @@
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <a href="/chat/<%= lead.customerId._id %>" class="btn btn-outline" style="padding: 0.75rem 1rem; font-size: 0.9rem; border-color: var(--primary); color: var(--primary);">
-                                        <i class="fas fa-comment-dots"></i> Chat
-                                    </a>
-                                    <button 
-                                        data-customer-id="<%= lead.customerId._id %>" 
-                                        data-category="<%= lead.category %>" 
-                                        data-lead-id="<%= lead._id %>"
-                                        onclick="handleBookLeadClick(this)"
-                                        class="btn btn-primary" style="padding: 0.75rem 1rem; font-size: 0.9rem; background: #2563eb;">
-                                        <i class="fas fa-calendar-check"></i> Book Now
-                                    </button>
+                                    <% if (lead.customerId) { %>
+                                        <a href="/chat/<%= lead.customerId._id %>" class="btn btn-outline" style="padding: 0.75rem 1rem; font-size: 0.9rem; border-color: var(--primary); color: var(--primary);">
+                                            <i class="fas fa-comment-dots"></i> Chat
+                                        </a>
+                                        <button 
+                                            data-customer-id="<%= lead.customerId._id %>" 
+                                            data-category="<%= lead.category %>" 
+                                            data-lead-id="<%= lead._id %>"
+                                            onclick="handleBookLeadClick(this)"
+                                            class="btn btn-primary" style="padding: 0.75rem 1rem; font-size: 1.1rem; background: #2563eb;">
+                                            <i class="fas fa-calendar-check"></i> Book Now
+                                        </button>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
