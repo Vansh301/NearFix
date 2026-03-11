@@ -33,14 +33,14 @@
                     <div style="margin-bottom: 2rem;">
                         <label style="display: block; font-weight: 600; margin-bottom: 0.75rem;">Price Range</label>
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <label><input type="checkbox" name="priceRange" value="₹500 - ₹2000"> Standard (₹500 - ₹2k)</label>
-                            <label><input type="checkbox" name="priceRange" value="₹2000+"> Premium (₹2k+)</label>
+                            <label><input type="checkbox" name="priceRange" value="₹500 - ₹2000" <%= (Array.isArray(priceRange) ? priceRange.includes('₹500 - ₹2000') : priceRange === '₹500 - ₹2000') ? 'checked' : '' %>> Standard (₹500 - ₹2k)</label>
+                            <label><input type="checkbox" name="priceRange" value="₹2000+" <%= (Array.isArray(priceRange) ? priceRange.includes('₹2000+') : priceRange === '₹2000+') ? 'checked' : '' %>> Premium (₹2k+)</label>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 2rem;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 0.75rem;">Minimum Rating: <span id="ratingVal">1</span></label>
-                        <input type="range" name="minRating" min="1" max="5" step="0.5" style="width: 100%;" oninput="document.getElementById('ratingVal').innerText = this.value">
+                        <label style="display: block; font-weight: 600; margin-bottom: 0.75rem;">Minimum Rating: <span id="ratingVal"><%= minRating %></span></label>
+                        <input type="range" name="minRating" min="1" max="5" step="0.5" value="<%= minRating %>" style="width: 100%;" oninput="document.getElementById('ratingVal').innerText = this.value">
                         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
                             <span>1 Star</span>
                             <span>5 Stars</span>

@@ -63,7 +63,9 @@ router.get('/search', async (req, res) => {
         res.render('search-results', { 
             providers, 
             category: category || '', 
-            location: location || '' 
+            location: location || '',
+            minRating: req.query.minRating || 3,
+            priceRange: req.query.priceRange || []
         });
     } catch (err) {
         console.error('Search Error:', err);
