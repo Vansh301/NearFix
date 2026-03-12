@@ -6,10 +6,19 @@ const User = require('../models/User');
 // Home Page
 router.get('/', async (req, res) => {
     try {
-        const topProviders = await Provider.find({ isVerified: true })
+        let topProviders = await Provider.find({}) // Show all professionals
             .populate('userId')
             .sort({ averageRating: -1 })
-            .limit(6);
+            .limit(20); // Get more to filter duplicates/missing users
+        
+        // Filter out orphaned records and duplicates
+        const seenUsers = new Set();
+        topProviders = topProviders.filter(p => {
+            if (!p.userId || seenUsers.has(p.userId._id.toString())) return false;
+            seenUsers.add(p.userId._id.toString());
+            return true;
+        }).slice(0, 3);
+        
         res.render('index', { topProviders });
     } catch (err) {
         console.error(err);
@@ -21,7 +30,7 @@ router.get('/', async (req, res) => {
 router.get('/search', async (req, res) => {
     try {
         let { category, location } = req.query;
-        let query = { isVerified: true };
+        let query = {}; // Remove isVerified constraint to show all workers in DB
 
         // 1. Flexible Category Handling
         if (category && category.trim() !== '') {
@@ -29,8 +38,16 @@ router.get('/search', async (req, res) => {
             query['services.category'] = { $regex: new RegExp(category.trim(), 'i') };
         }
 
-        // 2. Fetch all verified providers
+        // 2. Fetch all providers
         let providers = await Provider.find(query).populate('userId');
+        
+        // Remove orphaned records (missing users) and handle duplicates
+        const seenUsers = new Set();
+        providers = providers.filter(p => {
+            if (!p.userId || seenUsers.has(p.userId._id.toString())) return false;
+            seenUsers.add(p.userId._id.toString());
+            return true;
+        });
 
         // 3. Robust Location Filtering
         if (location && location.trim() !== '') {
@@ -56,15 +73,14 @@ router.get('/search', async (req, res) => {
             );
         }
 
-        if (req.query.minRating) {
-            providers = providers.filter(p => p.averageRating >= parseFloat(req.query.minRating));
-        }
+        const minRating = req.query.minRating ? parseFloat(req.query.minRating) : 0;
+        providers = providers.filter(p => p.averageRating >= minRating);
         
         res.render('search-results', { 
             providers, 
             category: category || '', 
             location: location || '',
-            minRating: req.query.minRating || 3,
+            minRating,
             priceRange: req.query.priceRange || []
         });
     } catch (err) {
