@@ -13,6 +13,8 @@
 - **Secure Chat**: Communicate directly with providers and receive instant price quotes.
 - **Live Notifications**: Get notified via WhatsApp-style toasts and "Welcome Back" unread message alerts.
 - **Booking Management**: Track service status from 'Pending' to 'Completed' and leave reviews.
+- **Secure Payments**: Integrated Stripe checkout for safe and seamless payment processing.
+- **Automated Review Requests**: Automatically prompts customers to leave a review via chat after a successful payment.
 
 ### 🛠️ For Service Providers
 
@@ -37,6 +39,7 @@
 - **Backend**: Node.js, Express.js.
 - **Database**: MongoDB with Mongoose.
 - **Real-time**: Socket.io for live chat and notifications.
+- **Payments**: Stripe processing and automated checkout sessions.
 - **Security**: Passport.js (Local Strategy), Crypto for tokens, Bcrypt for hashing.
 - **Storage**: Multer for profile image uploads.
 
@@ -64,6 +67,7 @@
    PORT=3000
    MONGODB_URI=mongodb://localhost:27017/nearfix
    SESSION_SECRET=your_super_secret_key
+   STRIPE_SECRET_KEY=your_stripe_secret_key
    ```
 
 4. **Seed Initial Data (Optional)**
