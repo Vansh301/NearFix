@@ -22,6 +22,10 @@ const providerSchema = new mongoose.Schema({
         description: String,
         priceRange: String
     }],
+    govtId: {
+        type: String, // Path to the uploaded ID image
+        required: true
+    },
     isVerified: {
         type: Boolean,
         default: false

@@ -40,7 +40,7 @@
                         <tr>
                             <th style="padding: 1.25rem 2rem; text-align: left;">Worker Name</th>
                             <th style="padding: 1.25rem 2rem; text-align: left;">Category</th>
-                            <th style="padding: 1.25rem 2rem; text-align: left;">Experience</th>
+                            <th style="padding: 1.25rem 2rem; text-align: left;">Govt ID</th>
                             <th style="padding: 1.25rem 2rem; text-align: left;">Action</th>
                         </tr>
                     </thead>
@@ -49,10 +49,18 @@
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 1.5rem 2rem; font-weight: 600;"><%= provider.userId.fullName %></td>
                                 <td style="padding: 1.5rem 2rem;"><%= provider.services[0].category %></td>
-                                <td style="padding: 1.5rem 2rem;"><%= provider.experience %> Years</td>
+                                <td style="padding: 1.5rem 2rem;">
+                                    <% if (provider.govtId) { %>
+                                        <a href="<%= provider.govtId %>" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--primary);">
+                                            <i class="fas fa-id-card"></i> View ID
+                                        </a>
+                                    <% } else { %>
+                                        <span style="color: red;">Missing ID</span>
+                                    <% } %>
+                                </td>
                                 <td style="padding: 1.5rem 2rem;">
                                     <form action="/admin/provider/<%= provider._id %>/verify" method="POST">
-                                        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Approve Worker</button>
+                                        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem; background: #10b981;">Approve & Verify</button>
                                     </form>
                                 </td>
                             </tr>

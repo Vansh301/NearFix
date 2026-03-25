@@ -6,10 +6,10 @@ const User = require('../models/User');
 // Home Page
 router.get('/', async (req, res) => {
     try {
-        let topProviders = await Provider.find({}) // Show all professionals
+        let topProviders = await Provider.find({ isVerified: true }) // Only show verified professionals
             .populate('userId')
             .sort({ averageRating: -1 })
-            .limit(20); // Get more to filter duplicates/missing users
+            .limit(20); 
         
         // Filter out orphaned records and duplicates
         const seenUsers = new Set();
@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
 router.get('/search', async (req, res) => {
     try {
         let { category, location } = req.query;
-        let query = {}; // Remove isVerified constraint to show all workers in DB
+        let query = { isVerified: true }; // ONLY show verified workers
 
         // 1. Flexible Category Handling
         if (category && category.trim() !== '') {
@@ -96,7 +96,18 @@ router.get('/profile/:id', async (req, res) => {
         const provider = await Provider.findById(req.params.id).populate('userId');
         const Review = require('../models/Review');
         const reviews = await Review.find({ providerId: req.params.id }).populate('customerId');
-        res.render('provider-profile', { provider, reviews });
+        const Booking = require('../models/Booking');
+        const bookings = await Booking.find({ 
+            providerId: req.params.id, 
+            status: { $in: ['pending', 'accepted', 'confirmed'] } 
+        });
+
+        const bookedTimeSlots = bookings.map(b => {
+             const d = new Date(b.bookingDate);
+             return `${d.toISOString().split('T')[0]}_${b.bookingTime}`;
+        });
+
+        res.render('provider-profile', { provider, reviews, bookedTimeSlots });
     } catch (err) {
         req.flash('error', 'Provider not found.');
         res.redirect('/');

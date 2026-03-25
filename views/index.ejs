@@ -131,7 +131,11 @@
                         <div class="card" onclick="window.location.href='/profile/<%= provider._id %>'">
                             <img src="<%= provider.userId.profileImage %>" alt="Provider" class="card-img" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= provider.userId.fullName %>&background=6366f1&color=fff'">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                <span class="badge badge-success">Verified</span>
+                                <% if (provider.isVerified) { %>
+                                    <span class="badge badge-success">Verified</span>
+                                <% } else { %>
+                                    <span class="badge" style="background: var(--warning); color: #000;">Reviewing</span>
+                                <% } %>
                                 <span style="font-weight: 700;"><i class="fas fa-star" style="color: #f59e0b;"></i> <%= Number(provider.averageRating).toFixed(1) %></span>
                             </div>
                             <h3 style="margin-bottom: 0.25rem;"><%= provider.userId.fullName %></h3>

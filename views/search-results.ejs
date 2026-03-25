@@ -61,10 +61,21 @@
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                                 <img src="<%= provider.userId.profileImage %>" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= provider.userId.fullName %>&background=6366f1&color=fff'">
                                 <div style="flex: 1;">
-                                    <h3 style="margin-bottom: 0.25rem;"><%= provider.userId.fullName %></h3>
+                                    <h3 style="margin-bottom: 0.25rem;">
+                                        <%= provider.userId.fullName %>
+                                        <% if (provider.isVerified) { %>
+                                            <i class="fas fa-check-circle" style="color: #10b981; font-size: 0.8em; margin-left: 0.25rem;" title="Verified Expert"></i>
+                                        <% } else { %>
+                                            <i class="fas fa-clock" style="color: var(--warning); font-size: 0.8em; margin-left: 0.25rem;" title="Verification Pending"></i>
+                                        <% } %>
+                                    </h3>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                                     <p style="color: var(--primary); font-weight: 600; font-size: 0.9rem; margin: 0;"><%= provider.services.map(s => s.category).join(', ') %></p>
-                                    <span class="badge" style="background: #ecfdf5; color: #047857; font-size: 0.8rem;"><%= (provider.services && provider.services.length > 0) ? provider.services[0].priceRange : 'Ask for Price' %></span>
+                                    <% if (provider.isVerified) { %>
+                                    <span class="badge badge-success">Verified</span>
+                                <% } else { %>
+                                    <span class="badge" style="background: var(--warning); color: #000;">In Verification</span>
+                                <% } %>
                                 </div>
                                         <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
                                             <i class="fas fa-star" style="color: #f59e0b;"></i>

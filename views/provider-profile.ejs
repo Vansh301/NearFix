@@ -9,7 +9,11 @@
                 <div>
                     <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;"><%= provider.userId.fullName %></h1>
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified Expert</span>
+                        <% if (provider.isVerified) { %>
+                            <span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified Expert</span>
+                        <% } else { %>
+                            <span class="badge" style="background: var(--warning); color: #000;"><i class="fas fa-clock"></i> Verification Pending</span>
+                        <% } %>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-star" style="color: #f59e0b;"></i>
                             <span style="font-weight: 700; font-size: 1.1rem;"><%= Number(provider.averageRating).toFixed(1) %></span>
@@ -90,35 +94,47 @@
             <div style="background: var(--surface); padding: 2.5rem; border-radius: var(--radius); border: 1px solid var(--primary); box-shadow: var(--shadow-lg); position: sticky; top: 100px;">
                 <h3 style="margin-bottom: 1.5rem;">Book This Service</h3>
                 <% if (currentUser && currentUser.role === 'customer') { %>
-                    <form action="/user/book/<%= provider._id %>" method="POST">
-                        <div class="form-group">
-                            <label>Choose Service</label>
-                            <select name="serviceCategory" class="form-control" required>
-                                <% provider.services.forEach(service => { %>
-                                    <option value="<%= service.category %>"><%= service.category %></option>
-                                <% }) %>
-                            </select>
+                    <% if (provider.isVerified) { %>
+                        <form action="/user/book/<%= provider._id %>" method="POST" id="bookingForm">
+                            <div class="form-group">
+                                <label>Choose Service</label>
+                                <select name="serviceCategory" class="form-control" required>
+                                    <% provider.services.forEach(service => { %>
+                                        <option value="<%= service.category %>"><%= service.category %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Appointment Date</label>
+                                <input type="date" name="bookingDate" id="bookingDate" class="form-control" required min="<%= new Date().toISOString().split('T')[0] %>">
+                            </div>
+                            <div class="form-group">
+                                <label>Preferred Time</label>
+                                <select name="bookingTime" id="bookingTime" class="form-control" required>
+                                    <option value="">Select Time Slot</option>
+                                    <option value="09:00 AM">09:00 AM</option>
+                                    <option value="10:00 AM">10:00 AM</option>
+                                    <option value="11:00 AM">11:00 AM</option>
+                                    <option value="02:00 PM">02:00 PM</option>
+                                    <option value="04:00 PM">04:00 PM</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes for Provider</label>
+                                <textarea name="notes" class="form-control" rows="3" placeholder="Explain your requirements..."></textarea>
+                            </div>
+                            <div id="slotWarning" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem;">
+                                <i class="fas fa-circle-exclamation"></i> This professional is already booked at this time.
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="bookBtn" style="width: 100%; justify-content: center; padding: 1rem;">Request Booking</button>
+                        </form>
+                    <% } else { %>
+                        <div style="background: #fef9c3; border: 1px solid #fde047; padding: 1.5rem; border-radius: 12px; text-align: center;">
+                            <i class="fas fa-shield-halved" style="color: #854d0e; font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <h4 style="color: #854d0e; margin-bottom: 0.5rem;">Awaiting Verification</h4>
+                            <p style="font-size: 0.9rem; color: #713f12;">This professional is currently under background check. Booking will be available once verified by Admin.</p>
                         </div>
-                        <div class="form-group">
-                            <label>Appointment Date</label>
-                            <input type="date" name="bookingDate" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Preferred Time</label>
-                            <select name="bookingTime" class="form-control" required>
-                                <option>09:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>02:00 PM</option>
-                                <option>04:00 PM</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Notes for Provider</label>
-                            <textarea name="notes" class="form-control" rows="3" placeholder="Explain your requirements..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;">Request Booking</button>
-                    </form>
+                    <% } %>
                     
                     <a href="/chat/<%= provider.userId._id %>" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 1rem; margin-top: 1rem; border-color: var(--primary); color: var(--primary);">
                         <i class="fas fa-message"></i> Send Message
@@ -154,4 +170,37 @@
     </div>
 </main>
 
+<div id="booked-slots-data" data-slots='<%- JSON.stringify(bookedTimeSlots || []) %>' style="display: none;"></div>
+
 <%- include('partials/footer') %>
+
+<script>
+    const slotsData = document.getElementById('booked-slots-data');
+    const bookedTimeSlots = JSON.parse(slotsData.dataset.slots || '[]');
+    const dateInput = document.getElementById('bookingDate');
+    const timeInput = document.getElementById('bookingTime');
+    const warning = document.getElementById('slotWarning');
+    const bookBtn = document.getElementById('bookBtn');
+
+    function checkSlot() {
+        if (!dateInput.value || !timeInput.value) return;
+        
+        const key = `${dateInput.value}_${timeInput.value}`;
+        console.log('Checking slot:', key);
+        
+        if (bookedTimeSlots.includes(key)) {
+            warning.style.display = 'block';
+            bookBtn.disabled = true;
+            bookBtn.style.opacity = '0.5';
+        } else {
+            warning.style.display = 'none';
+            bookBtn.disabled = false;
+            bookBtn.style.opacity = '1';
+        }
+    }
+
+    if (dateInput && timeInput) {
+        dateInput.addEventListener('change', checkSlot);
+        timeInput.addEventListener('change', checkSlot);
+    }
+</script>

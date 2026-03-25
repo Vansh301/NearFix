@@ -9,6 +9,8 @@
 ### 👤 For Customers
 
 - **Smart Search**: Find experts by category (Electrician, Plumber, etc.) and location.
+- **Anti-Double Booking**: Smart scheduling prevents multiple users from booking the same expert at the same time.
+- **Service Verification Badging**: Only book experts with a dynamic verified status badge.
 - **Real-time Booking**: Schedule appointments with a premium date/month/year picker.
 - **Secure Chat**: Communicate directly with providers and receive instant price quotes.
 - **Live Notifications**: Get notified via WhatsApp-style toasts and "Welcome Back" unread message alerts.
@@ -19,13 +21,16 @@
 ### 🛠️ For Service Providers
 
 - **Smart Dashboard**: Manage all your incoming bookings and performance metrics in one place.
+- **Govt ID Verification**: Mandatory Government ID upload during setup to build trust (Multer-powered).
 - **Marketplace Leads**: Find open jobs in your area and send instant quotes to clients.
 - **Real-time Quoting**: Send professional price offers directly through the chat.
 - **Earnings Tracker**: Keep track of your completed jobs and total earnings.
 - **Response Management**: Accept or reject bookings with a single click.
 
-### 🛡️ Security & Experience
+### 🛡️ Administration & Security
 
+- **Strict Admin Verification**: New workers are hidden from search and blocked from bookings until identity is manually verified by an Admin.
+- **Real-time Admin Alerts**: Live Socket.io notifications tell Admins when a new worker is awaiting verification.
 - **Role-Based Access**: Specialized views for Customers, Providers, and Admins.
 - **Password Recovery**: Secure 'Forgot Password' workflow with tokenized reset links.
 - **Theme Sync**: Premium dark and light mode support with smooth transitions.
@@ -41,28 +46,25 @@
 - **Real-time**: Socket.io for live chat and notifications.
 - **Payments**: Stripe processing and automated checkout sessions.
 - **Security**: Passport.js (Local Strategy), Crypto for tokens, Bcrypt for hashing.
-- **Storage**: Multer for profile image uploads.
+- **Storage**: Multer for profile image and Government ID uploads.
 
 ---
 
 ## 🛠️ Installation & Setup
 
 1. **Clone the repository**
-
    ```bash
    git clone <repository-url>
    cd NearFix
    ```
 
 2. **Install dependencies**
-
    ```bash
    npm install
    ```
 
 3. **Configure Environment Variables**
    Create a `.env` file in the root directory:
-
    ```env
    PORT=3000
    MONGODB_URI=mongodb://localhost:27017/nearfix
@@ -72,13 +74,11 @@
 
 4. **Seed Initial Data (Optional)**
    Populate the database with test users and providers:
-
    ```bash
    npm run seed
    ```
 
 5. **Start the Application**
-
    ```bash
    # For development (with nodemon)
    npm run dev

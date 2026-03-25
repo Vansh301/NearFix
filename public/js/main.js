@@ -72,7 +72,7 @@ socket.on('notification', (data) => {
         // Also skip if we are already viewing this specific chat (already handled by block above, but for safety)
         if (chattingWithId === data.senderId) return;
 
-        const isSystemEvent = ['booking', 'cancel', 'payment'].includes(data.type);
+        const isSystemEvent = ['booking', 'cancel', 'payment', 'verification'].includes(data.type);
         const toast = document.getElementById('msg-notification');
         
         if (toast) {
@@ -95,6 +95,10 @@ socket.on('notification', (data) => {
                 iconContainer.style.background = 'linear-gradient(135deg, #ef4444, #b91c1c)';
                 iconContainer.innerHTML = '<i class="fas fa-ban"></i>';
                 progressBar.style.background = '#ef4444';
+            } else if (data.type === 'verification') {
+                iconContainer.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)'; // Amber/Gold
+                iconContainer.innerHTML = '<i class="fas fa-user-shield"></i>';
+                progressBar.style.background = '#f59e0b';
             } else {
                 iconContainer.style.background = 'linear-gradient(135deg, var(--primary), #4f46e5)';
                 const initial = (data.senderName || 'N').charAt(0).toUpperCase();
@@ -111,8 +115,13 @@ socket.on('notification', (data) => {
                 }
             }
 
-            linkEl.href = data.senderId ? '/chat/' + data.senderId : '/chat';
-            linkEl.innerText = data.senderId ? 'Reply Now' : 'View Inbox';
+            if (data.type === 'verification') {
+                linkEl.href = '/admin/dashboard';
+                linkEl.innerText = 'Verify Now';
+            } else {
+                linkEl.href = data.senderId ? '/chat/' + data.senderId : '/chat';
+                linkEl.innerText = data.senderId ? 'Reply Now' : 'View Inbox';
+            }
 
             // Animation
             const duration = isSystemEvent ? 7000 : 5000;

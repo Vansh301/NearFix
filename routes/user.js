@@ -101,6 +101,30 @@ router.post('/book/:providerId', isCustomer, async (req, res) => {
 
         // Find the specific service to get price/details if needed
         const service = provider.services.find(s => s.category === serviceCategory);
+
+        // 1. Check if provider is verified
+        if (!provider.isVerified) {
+            req.flash('error', 'This professional is currently under verification. You cannot book them yet.');
+            return res.redirect('back');
+        }
+
+        // 2. Check for double booking (Same provider, date, and time)
+        // Normalize date to compare successfully
+        const searchDate = new Date(bookingDate);
+        const existingBooking = await Booking.findOne({
+            providerId: provider._id,
+            bookingDate: {
+                $gte: new Date(searchDate.setHours(0,0,0,0)),
+                $lt: new Date(searchDate.setHours(23,59,59,999))
+            },
+            bookingTime: bookingTime,
+            status: { $in: ['pending', 'accepted', 'confirmed'] }
+        });
+
+        if (existingBooking) {
+            req.flash('error', 'This professional is already booked for this date and time. Please choose another slot or provider.');
+            return res.redirect('back');
+        }
         
         const booking = new Booking({
             customerId: req.user._id,

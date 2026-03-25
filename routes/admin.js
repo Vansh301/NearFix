@@ -10,11 +10,14 @@ const { isAdmin } = require('../middleware/auth');
 router.get('/dashboard', isAdmin, async (req, res) => {
     try {
         const users = await User.find();
-        const providers = await Provider.find().populate('userId');
+        let providers = await Provider.find().populate('userId');
         const bookings = await Booking.find().populate('customerId').populate({
             path: 'providerId',
             populate: { path: 'userId' }
         });
+
+        // Filter out providers where userId is missing (orphaned records)
+        providers = providers.filter(p => p.userId !== null);
 
         const stats = {
             totalUsers: users.length,
@@ -32,7 +35,20 @@ router.get('/dashboard', isAdmin, async (req, res) => {
 // Verify Provider
 router.post('/provider/:id/verify', isAdmin, async (req, res) => {
     try {
-        await Provider.findByIdAndUpdate(req.params.id, { isVerified: true });
+        const provider = await Provider.findByIdAndUpdate(req.params.id, { isVerified: true });
+        
+        // Notify worker in real-time
+        if (provider) {
+             const io = req.app.get('io');
+             if (io) {
+                 io.to(`user-${provider.userId.toString()}`).emit('notification', {
+                     title: 'Profile Verified! ✅',
+                     content: 'Congratulations! Your profile has been approved and is now visible to customers.',
+                     type: 'success'
+                 });
+             }
+        }
+
         req.flash('success', 'Provider profile verified!');
         res.redirect('/admin/dashboard');
     } catch (err) {

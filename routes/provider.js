@@ -301,19 +301,54 @@ router.post('/booking/:id/received-payment', isProvider, async (req, res) => {
     }
 });
 
+// Multer Configuration for Govt ID Uploads
+const multer = require('multer');
+const path = require('path');
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/uploads/ids/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${req.user._id}-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+const upload = multer({ 
+    storage,
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png|pdf/;
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = filetypes.test(file.mimetype);
+        if (mimetype && extname) return cb(null, true);
+        cb('Error: Images or PDFs Only!');
+    }
+});
+
+// Create upload directory if it doesn't exist
+const fs = require('fs');
+const dir = './public/uploads/ids';
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir, { recursive: true });
+}
+
 // Provider Setup GET
-router.get('/setup', isProvider, (req, res) => {
+router.get('/setup', isProvider, async (req, res) => {
+    // Check if profile already exists
+    const existing = await Provider.findOne({ userId: req.user._id });
+    if (existing) return res.redirect('/provider/dashboard');
     res.render('provider/setup');
 });
 
 // Provider Setup POST
-router.post('/setup', isProvider, async (req, res) => {
+router.post('/setup', isProvider, upload.single('govtId'), async (req, res) => {
     try {
         const { bio, experience, category, city, priceRange } = req.body;
         
-        // Update user location
-        // Update user location
-        const User = require('../models/User');
+        if (!req.file) {
+            req.flash('error', 'Please upload your Government ID for verification.');
+            return res.redirect('back');
+        }
+
+        // Update user location city
         await User.findByIdAndUpdate(req.user._id, {
             'address.city': city
         });
@@ -322,18 +357,33 @@ router.post('/setup', isProvider, async (req, res) => {
             userId: req.user._id,
             bio,
             experience,
+            govtId: `/uploads/ids/${req.file.filename}`,
             services: [{ 
                 category,
-                priceRange, // Save selected price range
+                priceRange, 
                 description: `Professional ${category} services in ${city}.`
             }],
-            isVerified: true // Auto-verify for immediate visibility
+            isVerified: false // Needs Admin Approval
         });
         await provider.save();
-        req.flash('success', 'Profile setup complete!');
+
+        // Notify Admins in real-time
+        const io = req.app.get('io');
+        if (io) {
+            console.log(`[Socket] Emitting verification notification for: ${req.user.fullName} to admin-notifications room`);
+            io.to('admin-notifications').emit('notification', {
+                title: 'New Worker Verification! 👷',
+                content: `${req.user.fullName} has uploaded their ID. Please verify them.`,
+                type: 'verification',
+                senderId: req.user._id.toString(),
+                senderName: req.user.fullName
+            });
+        }
+        req.flash('success', 'Profile sent for Admin Verification! You will be visible on the platform once approved.');
         res.redirect('/provider/dashboard');
     } catch (err) {
-        req.flash('error', 'Setup failed.');
+        console.error('Setup Error:', err);
+        req.flash('error', 'Setup failed. Please check all fields.');
         res.redirect('back');
     }
 });
