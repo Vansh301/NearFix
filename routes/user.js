@@ -125,6 +125,24 @@ router.post('/book/:providerId', isCustomer, async (req, res) => {
             req.flash('error', 'This professional is already booked for this date and time. Please choose another slot or provider.');
             return res.redirect('back');
         }
+
+        // 3. New: Check if the selected time is in the past
+        const now = new Date();
+        const selectedDateTime = new Date(bookingDate);
+        
+        // Parse time slot (e.g., "09:00 AM")
+        const [timeStr, modifier] = bookingTime.split(' ');
+        let [hour, minute] = timeStr.split(':');
+        hour = parseInt(hour);
+        if (modifier === 'PM' && hour < 12) hour += 12;
+        if (modifier === 'AM' && hour === 12) hour = 0;
+        
+        selectedDateTime.setHours(hour, parseInt(minute), 0, 0);
+
+        if (selectedDateTime < now) {
+            req.flash('error', 'You cannot book a service for a time that has already passed.');
+            return res.redirect('back');
+        }
         
         const booking = new Booking({
             customerId: req.user._id,

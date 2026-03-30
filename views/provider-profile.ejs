@@ -183,12 +183,59 @@
     const bookBtn = document.getElementById('bookBtn');
 
     function checkSlot() {
-        if (!dateInput.value || !timeInput.value) return;
+        if (!dateInput.value) return;
+
+        const selectedDate = dateInput.value;
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
         
-        const key = `${dateInput.value}_${timeInput.value}`;
-        console.log('Checking slot:', key);
+        // Iterate through all time options to check for past times AND existing bookings
+        Array.from(timeInput.options).forEach(option => {
+            if (!option.value) return;
+
+            const slotKey = `${selectedDate}_${option.value}`;
+            const isAlreadyBooked = bookedTimeSlots.includes(slotKey);
+
+            // 1. Check if slot is in the past (for today)
+            let isPast = false;
+            if (selectedDate === todayStr) {
+                const currentHour = now.getHours();
+                const currentMin = now.getMinutes();
+
+                let [time, modifier] = option.value.split(' ');
+                let [hour, minute] = time.split(':');
+                hour = parseInt(hour);
+                if (modifier === 'PM' && hour < 12) hour += 12;
+                if (modifier === 'AM' && hour === 12) hour = 0;
+
+                if (hour < currentHour || (hour === currentHour && parseInt(minute) <= currentMin)) {
+                    isPast = true;
+                }
+            }
+
+            // Disable if either past OR already booked
+            if (isPast || isAlreadyBooked) {
+                option.disabled = true;
+                option.style.background = '#f1f5f9';
+                option.style.color = '#94a3b8';
+                
+                // If the selected value is now disabled, reset it
+                if (timeInput.value === option.value) {
+                    timeInput.value = "";
+                }
+            } else {
+                option.disabled = false;
+                option.style.background = 'transparent';
+                option.style.color = 'inherit';
+            }
+        });
+
+        if (!timeInput.value) return;
         
-        if (bookedTimeSlots.includes(key)) {
+        // Final Double-Check for the selected value
+        const currentKey = `${dateInput.value}_${timeInput.value}`;
+        if (bookedTimeSlots.includes(currentKey)) {
+            warning.innerHTML = '<i class="fas fa-circle-exclamation"></i> This professional is already booked at this time.';
             warning.style.display = 'block';
             bookBtn.disabled = true;
             bookBtn.style.opacity = '0.5';

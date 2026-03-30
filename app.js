@@ -104,14 +104,17 @@ io.on('connection', (socket) => {
         socket.join(`user-${room}`);
 
         // Join global admin room if user is an admin
-        try {
-            const user = await User.findById(room);
-            if (user && user.role === 'admin') {
-                console.log(`[Socket] Admin ${user.fullName} joined global admin-notifications room`);
-                socket.join('admin-notifications');
+        // Only attempt lookup if the room ID looks like a valid 24-character ObjectId
+        if (room && /^[0-9a-fA-F]{24}$/.test(room)) {
+            try {
+                const user = await User.findById(room);
+                if (user && user.role === 'admin') {
+                    console.log(`[Socket] Admin ${user.fullName} joined global admin-notifications room`);
+                    socket.join('admin-notifications');
+                }
+            } catch (err) {
+                console.error('Error joining admin room:', err);
             }
-        } catch (err) {
-            console.error('Error joining admin room:', err);
         }
 
         // NEW: Check for unread messages immediately after login/reconnect
