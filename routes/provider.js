@@ -435,16 +435,15 @@ router.post('/instant-book', isProvider, async (req, res) => {
             bookingId: booking._id
         });
         await quoteMessage.save();
-        await confirmMessage.save();
 
         // Send real-time notification and message to client
         const io = req.app.get('io');
         if (io) {
             const clientRoom = `user-${customerId.toString()}`;
-            const providerRoom = req.user._id.toString();
+            const chatRoom = [req.user._id.toString(), customerId.toString()].sort().join('-');
 
-            // 1. Send the Quote Card
-            io.to(providerRoom).emit('message', {
+            // 1. Send the Quote Card to the Chat Room (both see it)
+            io.to(chatRoom).emit('message', {
                 sender: req.user._id.toString(),
                 content: quoteMessage.content,
                 messageType: 'quote',
@@ -453,16 +452,7 @@ router.post('/instant-book', isProvider, async (req, res) => {
                 createdAt: quoteMessage.createdAt
             });
 
-            // 2. Send the Notification Text
-            io.to(providerRoom).emit('message', {
-                sender: req.user._id.toString(),
-                content: confirmMessage.content,
-                messageType: 'text',
-                bookingId: booking._id.toString(),
-                createdAt: confirmMessage.createdAt
-            });
-
-            // 3. Trigger Premium Toast for Client
+            // 2. Trigger Premium Toast for Client
             io.to(clientRoom).emit('notification', {
                 title: 'New Service Offer! 🏷️',
                 content: `${req.user.fullName} has sent you a quote for ${category}. Check your chat now!`,

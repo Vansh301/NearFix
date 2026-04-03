@@ -451,9 +451,9 @@
                                                     const bid = msg.bookingId ? msg.bookingId._id : '';
                                                     const price = msg.proposedPrice || 0;
                                                 %>
-                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                                                        <button onclick="acceptQuote('<%= bid %>', '<%= price %>', 'cash')" class="btn" style="font-size: 0.75rem; padding: 0.5rem; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; font-weight: 700;">Pay Cash</button>
-                                                        <button onclick="acceptQuote('<%= bid %>', '<%= price %>', 'online')" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.5rem; background: #10b981; border: none; font-weight: 700;">Pay Online</button>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                                                        <button onclick="acceptQuote('<%= bid %>', '<%= price %>', 'cash')" class="btn-payment-cash" style="font-size: 0.75rem; padding: 0.5rem;">Pay Cash</button>
+                                                        <button onclick="acceptQuote('<%= bid %>', '<%= price %>', 'online')" class="btn-payment-online" style="font-size: 0.75rem; padding: 0.5rem;">Pay Online</button>
                                                     </div>
                                                 <% } else { %>
                                                     <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-bottom: 0.5rem;">Waiting for customer...</div>
@@ -714,8 +714,8 @@
                                     <div class="quote-actions">
                                         ${!isMine ? `
                                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
-                                                <button onclick="acceptQuote('${bid}', '${msg.proposedPrice}', 'cash')" class="btn" style="font-size: 0.75rem; padding: 0.5rem; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; font-weight: 700; border-radius: 8px;">Pay Cash</button>
-                                                <button onclick="acceptQuote('${bid}', '${msg.proposedPrice}', 'online')" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.5rem; background: #10b981; border: none; font-weight: 700; border-radius: 8px;">Pay Online</button>
+                                                <button onclick="acceptQuote('${bid}', '${msg.proposedPrice}', 'cash')" class="btn-payment-cash" style="font-size: 0.75rem; padding: 0.5rem;">Pay Cash</button>
+                                                <button onclick="acceptQuote('${bid}', '${msg.proposedPrice}', 'online')" class="btn-payment-online" style="font-size: 0.75rem; padding: 0.5rem;">Pay Online</button>
                                             </div>
                                         ` : '<div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 1rem; font-weight: 600;">Waiting for customer...</div>'}
                                     </div>

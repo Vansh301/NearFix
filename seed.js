@@ -84,11 +84,13 @@ const seedData = async () => {
                     description: `Expert ${p.category} services for your home and office.`,
                     priceRange: '₹500 - ₹2000'
                 }],
+                govtId: '/img/default-id.png', // Added missing required field
                 isVerified: true,
                 averageRating: (4 + Math.random()).toFixed(1),
                 totalReviews: 10 + Math.floor(Math.random() * 50)
             });
             await provider.save();
+            console.log(`Created provider: ${p.fullName}`);
         }
 
         console.log('Seed data created successfully!');
