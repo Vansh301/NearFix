@@ -332,6 +332,7 @@
                                 <div class="avatar-circle">
                                     <%= chat.otherUser.fullName.charAt(0) %>
                                 </div>
+                                <div id="sidebar-online-<%= chat.otherUser._id %>" class="sidebar-online-dot" style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid #fff; display: none;"></div>
                                 <div class="unread-badge <%= chat.unreadCount > 0 ? '' : 'unread-badge-hidden' %>" 
                                      id="dot-<%= chat.otherUser._id %>" 
                                      style="position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; background: #ef4444; border: 2px solid #fff; border-radius: 10px; color: white; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 5;">
@@ -371,10 +372,16 @@
                         </div>
                         <div>
                             <h4 style="font-size: 1.05rem; margin: 0;"><%= activeChat.fullName %></h4>
-                            <span style="font-size: 0.75rem; color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
-                                <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span>
-                                Online
-                            </span>
+                            <!-- Dynamic Online Status -->
+                            <div id="chat-status-indicator" data-user-id="<%= activeChat._id %>">
+                                <span id="status-online" style="font-size: 0.75rem; color: #10b981; font-weight: 600; display: none; align-items: center; gap: 0.4rem;">
+                                    <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span>
+                                    Online
+                                </span>
+                                <span id="status-offline" style="font-size: 0.75rem; color: #94a3b8; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                    Offline
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 0.75rem;">
@@ -503,6 +510,50 @@
                     const room = [currentUserId, otherUserId].sort().join('-');
                     socket.emit('join', room);
                     socket.emit('join', currentUserId); // Join private room for notifications
+
+                    // --- Online Status Logic for Chat ---
+                    function updateChatStatus(userId, status) {
+                        if (userId === otherUserId) {
+                            const onlineEl = document.getElementById('status-online');
+                            const offlineEl = document.getElementById('status-offline');
+                            if (onlineEl && offlineEl) {
+                                if (status === 'online') {
+                                    onlineEl.style.display = 'flex';
+                                    offlineEl.style.display = 'none';
+                                } else {
+                                    onlineEl.style.display = 'none';
+                                    offlineEl.style.display = 'flex';
+                                }
+                            }
+                        }
+                    }
+
+                    socket.emit('getOnlineUsers');
+                    socket.on('onlineUsersList', (users) => {
+                        // Update Chat Header
+                        if (users.includes(otherUserId)) {
+                            updateChatStatus(otherUserId, 'online');
+                        } else {
+                            updateChatStatus(otherUserId, 'offline');
+                        }
+
+                        // Update all sidebar dots
+                        users.forEach(userId => {
+                            const dot = document.getElementById(`sidebar-online-${userId}`);
+                            if (dot) dot.style.display = 'block';
+                        });
+                    });
+
+                    socket.on('userStatus', (data) => {
+                        // Header Status
+                        updateChatStatus(data.userId, data.status);
+                        
+                        // Sidebar Status
+                        const dot = document.getElementById(`sidebar-online-${data.userId}`);
+                        if (dot) {
+                            dot.style.display = data.status === 'online' ? 'block' : 'none';
+                        }
+                    });
 
                     // Global notifications and sidebar reordering are now handled in main.js
 

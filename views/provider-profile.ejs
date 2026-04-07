@@ -7,7 +7,10 @@
             <div style="display: flex; gap: 2rem; margin-bottom: 3rem; align-items: center;">
                 <img src="<%= provider.userId.profileImage %>" style="width: 150px; height: 150px; border-radius: 24px; object-fit: cover; box-shadow: var(--shadow-lg);" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= provider.userId.fullName %>&background=6366f1&color=fff'">
                 <div>
-                    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;"><%= provider.userId.fullName %></h1>
+                    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem;">
+                        <%= provider.userId.fullName %>
+                        <span id="online-indicator-<%= provider.userId._id %>" class="online-dot" title="Online now" style="display: none; width: 14px; height: 14px; background: #22c55e; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); flex-shrink: 0;"></span>
+                    </h1>
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                         <% if (provider.isVerified) { %>
                             <span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified Expert</span>
@@ -117,6 +120,7 @@
                                     <option value="11:00 AM">11:00 AM</option>
                                     <option value="02:00 PM">02:00 PM</option>
                                     <option value="04:00 PM">04:00 PM</option>
+                                    
                                 </select>
                             </div>
                             <div class="form-group">
@@ -250,4 +254,28 @@
         dateInput.addEventListener('change', checkSlot);
         timeInput.addEventListener('change', checkSlot);
     }
+
+    // --- Online Status Logic ---
+    const providerUserId = "<%= provider.userId._id %>";
+    const indicator = document.getElementById(`online-indicator-${providerUserId}`);
+
+    function updateIndicator(status) {
+        if (indicator) {
+            indicator.style.display = status === 'online' ? 'inline-block' : 'none';
+        }
+    }
+
+    // Initial check
+    socket.emit('getOnlineUsers');
+    socket.on('onlineUsersList', (users) => {
+        if (users.includes(providerUserId)) {
+            updateIndicator('online');
+        }
+    });
+
+    socket.on('userStatus', (data) => {
+        if (data.userId === providerUserId) {
+            updateIndicator(data.status);
+        }
+    });
 </script>

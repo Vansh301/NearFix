@@ -93,7 +93,9 @@ console.log('Mounting /payment');
 app.use('/payment', require('./routes/payment'));
 
 // Socket.io logic
+const onlineUsers = new Map(); // userId -> connection count
 io.on('connection', (socket) => {
+    let currentId = null;
     console.log('New WebSocket connection');
     
     socket.on('join', async (room) => {
@@ -134,6 +136,34 @@ io.on('connection', (socket) => {
                 }
             } catch (err) {
                 console.error('Error checking unread messages on join:', err);
+            }
+        }
+
+        // --- Online Status Tracking ---
+        if (room && /^[0-9a-fA-F]{24}$/.test(room)) {
+            currentId = room;
+            const count = (onlineUsers.get(currentId) || 0) + 1;
+            onlineUsers.set(currentId, count);
+            
+            // Only broadcast if this is the first connection
+            if (count === 1) {
+                io.emit('userStatus', { userId: currentId, status: 'online' });
+            }
+        }
+    });
+
+    socket.on('getOnlineUsers', () => {
+        socket.emit('onlineUsersList', Array.from(onlineUsers.keys()));
+    });
+
+    socket.on('disconnect', () => {
+        if (currentId) {
+            const count = (onlineUsers.get(currentId) || 0) - 1;
+            if (count <= 0) {
+                onlineUsers.delete(currentId);
+                io.emit('userStatus', { userId: currentId, status: 'offline' });
+            } else {
+                onlineUsers.set(currentId, count);
             }
         }
     });
